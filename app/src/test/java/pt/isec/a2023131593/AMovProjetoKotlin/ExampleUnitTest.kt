@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.safetysec
+package pt.isec.a2023131593.AMovProjetoKotlin
 
 import org.junit.Test
 

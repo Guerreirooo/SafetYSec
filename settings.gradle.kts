@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SafetYSec"
+rootProject.name = "AMovProjetoKotlin"
 include(":app")
  

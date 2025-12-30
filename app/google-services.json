@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "561513600292",
+    "project_id": "amovprojetokotlin",
+    "storage_bucket": "amovprojetokotlin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561513600292:android:9986614c47852a31788fb1",
+        "android_client_info": {
+          "package_name": "pt.isec.a2023131593.AMovProjetoKotlin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWJU0exmAbzaHPm416rCHUqa-EAEh0pPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -37,11 +37,12 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.Navigation.BottomNavBar
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.Navigation.LeftNavBar
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +55,8 @@ fun ProfileScreen(
     val scope = rememberCoroutineScope()
 
     var selectedItem by remember { mutableStateOf("SafetYSec") }
+    var showAddMonitor by remember { mutableStateOf(false) }
+    var showAddProtected by remember { mutableStateOf(false) }
 
     val userId = auth.currentUser?.uid
     val email = auth.currentUser?.email ?: ""
@@ -65,7 +68,6 @@ fun ProfileScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isEditing by remember { mutableStateOf(false) }
 
-    // Fetch Firestore data
     LaunchedEffect(userId) {
         if (userId != null) {
             firestore.collection("User")
@@ -97,7 +99,9 @@ fun ProfileScreen(
                 drawerState = drawerState,
                 scope = scope,
                 selectedItem = selectedItem,
-                onItemSelected = { item -> selectedItem = item }
+                onItemSelected = { selectedItem = it },
+                onAddMonitorClick = { showAddMonitor = true },
+                onAddProtectedClick = { showAddProtected = true }
             )
         }
     ) {
@@ -153,12 +157,11 @@ fun ProfileScreen(
                                         auth.sendPasswordResetEmail(email)
                                             .addOnCompleteListener { task ->
                                                 isLoading = false
-                                                if (task.isSuccessful) {
-                                                    errorMessage =
-                                                        "Email de recuperação enviado. Verifica a tua caixa de entrada."
+                                                errorMessage = if (task.isSuccessful) {
+                                                    "Email de recuperação enviado. Verifica a tua caixa de entrada."
                                                 } else {
                                                     val exception = task.exception as? FirebaseAuthException
-                                                    errorMessage = when (exception?.errorCode) {
+                                                    when (exception?.errorCode) {
                                                         "ERROR_INVALID_EMAIL" -> "Email inválido"
                                                         "ERROR_USER_NOT_FOUND" -> "Não existe conta associada a este email"
                                                         else -> exception?.localizedMessage
@@ -216,7 +219,6 @@ fun ProfileScreen(
                             Button(
                                 onClick = {
                                     if (isEditing) {
-                                        // Salvar alterações no Firestore
                                         userId?.let { uid ->
                                             val updatedData = hashMapOf(
                                                 "Nome" to nome,
@@ -228,8 +230,7 @@ fun ProfileScreen(
                                                 .update(updatedData as Map<String, Any>)
                                                 .addOnSuccessListener { isEditing = false }
                                                 .addOnFailureListener { e ->
-                                                    errorMessage =
-                                                        "Erro ao salvar alterações: ${e.localizedMessage}"
+                                                    errorMessage = "Erro ao salvar alterações: ${e.localizedMessage}"
                                                 }
                                         }
                                     } else {
@@ -246,6 +247,19 @@ fun ProfileScreen(
                     }
                 }
             }
+        )
+    }
+
+    if (showAddMonitor) {
+        AddMonitor(
+            onDismiss = { showAddMonitor = false }
+        )
+    }
+
+    if (showAddProtected) {
+        AddProtected(
+            onDismiss = { showAddProtected = false },
+            onProtectedAdded = {}
         )
     }
 }

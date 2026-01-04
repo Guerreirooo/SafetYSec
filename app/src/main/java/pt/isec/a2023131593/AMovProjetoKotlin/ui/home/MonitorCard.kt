@@ -81,14 +81,14 @@ fun MonitorCard(
                 }
 
                 IconButton(onClick = { showDialog = true }) {
-                    Icon(Icons.Default.Remove, contentDescription = "Remover Monitor")
+                    Icon(Icons.Default.Remove, contentDescription = "Remove Monitor")
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Opções Monitorização",
+                text = "Monitoring Options",
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
                     navController.navigate(
@@ -121,7 +121,7 @@ fun MonitorCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Tem a certeza que quer remover este monitor?",
+                            text = "Are you sure you want to remove this monitor?",
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center
                         )
@@ -147,7 +147,7 @@ fun MonitorCard(
                             },
                             modifier = Modifier.fillMaxWidth(0.6f)
                         ) {
-                            Text("Confirmar")
+                            Text("Confirm")
                         }
                     }
                 }

@@ -35,7 +35,7 @@ fun LoginScreen(
         ) {
 
             Text(
-                text = "Login",
+                text = "SafetYSec",
                 style = MaterialTheme.typography.headlineSmall
             )
 
@@ -70,7 +70,6 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    // 🔹 Validação antes do login
                     if (email.isBlank() || password.isBlank()) {
                         errorMessage = "Email e password têm de ser preenchidos"
                         return@Button
@@ -87,7 +86,6 @@ fun LoginScreen(
                             } else {
                                 val exception = task.exception as? FirebaseAuthException
 
-                                // 🔹 Sempre mostrar "Email ou password incorretos" para erros de credenciais
                                 errorMessage = when (exception?.errorCode) {
                                     "ERROR_WRONG_PASSWORD",
                                     "ERROR_USER_NOT_FOUND",

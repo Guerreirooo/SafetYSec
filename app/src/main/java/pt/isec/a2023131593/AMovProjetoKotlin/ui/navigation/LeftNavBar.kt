@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Divider
@@ -26,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
@@ -40,18 +41,21 @@ fun LeftNavBar(
     selectedItem: String,
     onItemSelected: (String) -> Unit,
     onAddMonitorClick: () -> Unit,
-    onAddProtectedClick: () -> Unit
+    onAddProtectedClick: () -> Unit,
+    onCancelAlertClick: () -> Unit
 ) {
     val menuItems = listOf(
-        "Associar Monitor",
-        "Adicionar Protegido",
-        "Propostas de Monitorização",
-        "Histórico de Alertas",
-        "Cancelar Alerta"
+        "Associate Monitor",
+        "Add Protected",
+        "Monitoring Proposals",
+        "Alerts History",
+        "Cancel Alert"
     )
 
+    val scrollState = rememberScrollState()
+
     ModalDrawerSheet(
-        modifier = Modifier.width(250.dp)
+        modifier = Modifier.width(250.dp).verticalScroll(scrollState)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -73,22 +77,22 @@ fun LeftNavBar(
                         scope.launch { drawerState.close() }
 
                         when (item) {
-                            "Associar Monitor" -> onAddMonitorClick()
-                            "Adicionar Protegido" -> onAddProtectedClick()
-                            "Propostas de Monitorização" -> navController.navigate(Routes.PROPOSAL_RULES)
-                            "Histórico de Alertas" -> navController.navigate(Routes.HISTORY)
-                            "Cancelar Alerta" -> navController.navigate(Routes.DASHBOARD)
+                            "Associate Monitor" -> onAddMonitorClick()
+                            "Add Protected" -> onAddProtectedClick()
+                            "Monitoring Proposals" -> navController.navigate(Routes.PROPOSAL_RULES)
+                            "Alerts History" -> navController.navigate(Routes.HISTORY)
+                            "Cancel Alert" -> onCancelAlertClick()
                         }
                     }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val icon = when (item) {
-                    "Associar Monitor" -> Icons.Default.Person
-                    "Adicionar Protegido" -> Icons.Default.PersonAdd
-                    "Propostas de Monitorização" -> Icons.Default.Description
-                    "Histórico de Alertas" -> Icons.Filled.Schedule
-                    "Cancelar Alerta" -> Icons.Default.Cancel
+                    "Associate Monitor" -> Icons.Default.PersonAdd
+                    "Add Protected" -> Icons.Filled.Add
+                    "Monitoring Proposals" -> Icons.Default.Description
+                    "Alerts History" -> Icons.Filled.Schedule
+                    "Cancel Alert" -> Icons.Default.Cancel
                     else -> null
                 }
 

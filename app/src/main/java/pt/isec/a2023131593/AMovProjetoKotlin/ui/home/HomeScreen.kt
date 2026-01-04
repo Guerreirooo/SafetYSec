@@ -1,5 +1,6 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.home
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -17,12 +18,17 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import listenForPanicAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.CancelAlert
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,19 +40,34 @@ fun HomeScreen(navController: NavHostController) {
 
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
+    var showCancelAlert by remember { mutableStateOf(false) }
 
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid
-
     val context = LocalContext.current
 
     var monitors by remember { mutableStateOf<List<String>>(emptyList()) }
     var protected by remember { mutableStateOf<List<String>>(emptyList()) }
 
+    val permissions = buildList {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    val (hasRequiredPermissions, permissionLauncher) =
+        rememberPermissionsState(permissions)
+
     LaunchedEffect(userId) {
         userId?.let { uid ->
-            listenForPanicAlerts(context, uid)
+            listenForAlerts(context, uid, AlertType.PANIC)
+            listenForAlerts(context, uid, AlertType.FALL)
+            listenForAlerts(context, uid, AlertType.ACCIDENT)
+            listenForAlerts(context, uid, AlertType.SPEED)
+            listenForAlerts(context, uid, AlertType.GEOFENCING)
+            listenForAlerts(context, uid, AlertType.INACTIVITY)
         }
     }
 
@@ -62,6 +83,8 @@ fun HomeScreen(navController: NavHostController) {
         }
     }
 
+    val scrollState = rememberScrollState()
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -72,7 +95,8 @@ fun HomeScreen(navController: NavHostController) {
                 selectedItem = selectedItem,
                 onItemSelected = { selectedItem = it },
                 onAddMonitorClick = { showAddMonitor = true },
-                onAddProtectedClick = { showAddProtected = true }
+                onAddProtectedClick = { showAddProtected = true },
+                onCancelAlertClick = { showCancelAlert = true }
             )
         }
     ) {
@@ -90,7 +114,9 @@ fun HomeScreen(navController: NavHostController) {
             bottomBar = {
                 BottomNavBar(
                     navController = navController,
-                    selectedRoute = Routes.DASHBOARD
+                    selectedRoute = Routes.DASHBOARD,
+                    hasRequiredPermissions = hasRequiredPermissions,
+                    requestPermissions = { permissionLauncher.launch(permissions.toTypedArray()) }
                 )
             }
         ) { padding ->
@@ -99,13 +125,13 @@ fun HomeScreen(navController: NavHostController) {
                     .fillMaxSize()
                     .padding(padding)
                     .padding(16.dp)
+                    .verticalScroll(scrollState)
             ) {
-
-                Text("Monitores Atuais:", style = MaterialTheme.typography.titleMedium)
+                Text("Monitors:", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
 
                 if (monitors.isEmpty()) {
-                    Text("Sem monitores associados")
+                    Text("No monitors associated")
                 } else {
                     monitors.forEach { monitorUid ->
                         MonitorCard(
@@ -129,11 +155,11 @@ fun HomeScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(24.dp))
 
-                Text("Protegidos Atuais:", style = MaterialTheme.typography.titleMedium)
+                Text("Protecteds:", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
 
                 if (protected.isEmpty()) {
-                    Text("Sem protegidos associados")
+                    Text("No protecteds associated")
                 } else {
                     protected.forEach { protectedUid ->
                         ProtectedCard(
@@ -146,7 +172,8 @@ fun HomeScreen(navController: NavHostController) {
                                         .get()
                                         .addOnSuccessListener { snapshot ->
                                             protected =
-                                                snapshot.get("protected") as? List<String> ?: emptyList()
+                                                snapshot.get("protected") as? List<String>
+                                                    ?: emptyList()
                                         }
                                 }
                             }
@@ -178,36 +205,8 @@ fun HomeScreen(navController: NavHostController) {
             }
         )
     }
-}
 
-fun showMonitorNotification(
-    context: Context,
-    protectedName: String,
-    eventType: String
-) {
-    val manager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    val channelId = "monitor_alert_channel"
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        manager.createNotificationChannel(
-            NotificationChannel(
-                channelId,
-                "Alertas de Emergência",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-        )
+    if (showCancelAlert) {
+        CancelAlert(onDismiss = { showCancelAlert = false })
     }
-
-    val notification = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(android.R.drawable.ic_dialog_alert)
-        .setContentTitle("ALERTA DETETADO")
-        .setContentText(
-            "O protegido $protectedName sofreu um alerta do tipo $eventType"
-        )
-        .setPriority(NotificationCompat.PRIORITY_HIGH)
-        .build()
-
-    manager.notify(System.currentTimeMillis().toInt(), notification)
 }

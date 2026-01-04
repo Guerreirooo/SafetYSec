@@ -1,5 +1,7 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,15 +12,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +37,19 @@ fun ProposalRules(
     val firestore = FirebaseFirestore.getInstance()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    var showAddMonitor by remember { mutableStateOf(false) }
+    var showAddProtected by remember { mutableStateOf(false) }
+    var showCancelAlert by remember { mutableStateOf(false) }
+
+    val daysOfWeek = listOf(
+        1 to "Sunday",
+        2 to "Monday",
+        3 to "Tuesday",
+        4 to "Wednesday",
+        5 to "Thursday",
+        6 to "Friday",
+        7 to "Saturday"
+    )
 
     var proposals by remember {
         mutableStateOf<Map<String, Map<String, Map<String, Any>>>>(emptyMap())
@@ -39,15 +59,27 @@ fun ProposalRules(
         mutableStateOf<Map<String, String>>(emptyMap())
     }
 
-    val daysOfWeek = mapOf(
-        1 to "Sunday",
-        2 to "Monday",
-        3 to "Tuesday",
-        4 to "Wednesday",
-        5 to "Thursday",
-        6 to "Friday",
-        7 to "Saturday"
-    )
+    val context = LocalContext.current
+    val permissions = buildList {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    val (hasRequiredPermissions, permissionLauncher) =
+        rememberPermissionsState(permissions)
+
+    LaunchedEffect(currentUserId) {
+        currentUserId?.let { uid ->
+            listenForAlerts(context, uid, AlertType.PANIC)
+            listenForAlerts(context, uid, AlertType.FALL)
+            listenForAlerts(context, uid, AlertType.ACCIDENT)
+            listenForAlerts(context, uid, AlertType.SPEED)
+            listenForAlerts(context, uid, AlertType.GEOFENCING)
+            listenForAlerts(context, uid, AlertType.INACTIVITY)
+        }
+    }
 
     LaunchedEffect(Unit) {
         firestore.collection("Rule")
@@ -97,10 +129,12 @@ fun ProposalRules(
                 navController = navController,
                 drawerState = drawerState,
                 scope = scope,
-                selectedItem = "Propostas de Monitorização",
+                selectedItem = "Monitoring Proposals",
                 onItemSelected = {},
-                onAddMonitorClick = {},
-                onAddProtectedClick = {}
+                onAddMonitorClick = { showAddMonitor = true },
+                onAddProtectedClick = { showAddProtected = true },
+                onCancelAlertClick = {showCancelAlert = true}
+
             )
         }
     ) {
@@ -116,7 +150,14 @@ fun ProposalRules(
                 )
             },
             bottomBar = {
-                BottomNavBar(navController = navController, selectedRoute = Routes.PROPOSAL_RULES)
+                BottomNavBar(
+                    navController = navController,
+                    selectedRoute = Routes.DASHBOARD,
+                    hasRequiredPermissions = hasRequiredPermissions,
+                    requestPermissions = {
+                        permissionLauncher.launch(permissions.toTypedArray())
+                    }
+                )
             }
         ) { padding ->
             Column(
@@ -268,7 +309,8 @@ fun ProposalRules(
                                                             }
                                                     }
                                             },
-                                            modifier = buttonModifier
+                                            modifier = buttonModifier,
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784))
                                         ) {
                                             Text("Accept")
                                         }
@@ -297,7 +339,7 @@ fun ProposalRules(
                                                     }
                                             },
                                             modifier = buttonModifier,
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6B6B))
                                         ) {
                                             Text("Reject", color = Color.White)
                                         }
@@ -310,5 +352,21 @@ fun ProposalRules(
                 }
             }
         }
+    }
+    if (showAddMonitor) {
+        AddMonitor(
+            onDismiss = { showAddMonitor = false }
+        )
+    }
+
+    if (showAddProtected) {
+        AddProtected(
+            onDismiss = { showAddProtected = false },
+            onProtectedAdded = {}
+        )
+    }
+
+    if(showCancelAlert){
+        CancelAlert(onDismiss = { showCancelAlert = false })
     }
 }

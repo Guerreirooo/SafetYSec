@@ -9,4 +9,5 @@ object Routes {
     const val PROTECTED_RULES = "protected_rules"
     const val PROPOSAL_RULES = "proposal_rules"
     const val HISTORY = "alert_history"
+    const val INFO = "protected_info"
 }

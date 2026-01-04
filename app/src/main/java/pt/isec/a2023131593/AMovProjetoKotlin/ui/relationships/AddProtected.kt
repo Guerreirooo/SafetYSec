@@ -108,19 +108,19 @@ fun AddProtected(
                                     firestore.collection("OneTimePass").document(it).delete()
                                 }
 
-                                resultText = "Protegido adicionado"
+                                resultText = "Protected Added"
                                 isSuccess = true
                                 onProtectedAdded()
                                 keyboardController?.hide()
                             }
                         }
                     } else {
-                        resultText = "Código inválido"
+                        resultText = "Invalid Code"
                         isSuccess = false
                     }
                 }
                 .addOnFailureListener {
-                    resultText = "Erro ao verificar código"
+                    resultText = "Error verifying code"
                     isSuccess = false
                 }
         } else if (joinedCode.length < codeLength) {
@@ -158,7 +158,7 @@ fun AddProtected(
                 ) {
 
                     Text(
-                        text = "Insira o código presente no ecrã do protegido",
+                        text = "Insert the code displayed on the protected screen",
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )

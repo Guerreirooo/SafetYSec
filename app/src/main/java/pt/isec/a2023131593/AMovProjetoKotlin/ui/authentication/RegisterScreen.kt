@@ -1,6 +1,8 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.authentication
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -29,6 +31,7 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val firestore = FirebaseFirestore.getInstance()
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -52,11 +55,12 @@ fun RegisterScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(0.9f),
+                modifier = Modifier.fillMaxWidth(0.9f)
+                .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Register",
+                    text = "SafetYSec",
                     style = MaterialTheme.typography.headlineSmall
                 )
 
@@ -84,7 +88,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = nome,
                     onValueChange = { nome = it },
-                    label = { Text("Nome") },
+                    label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -93,7 +97,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = codigoAlerta,
                     onValueChange = { codigoAlerta = it },
-                    label = { Text("Código de Alerta") },
+                    label = { Text("Alert Code") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -102,7 +106,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = telemovel,
                     onValueChange = { telemovel = it },
-                    label = { Text("Telemóvel") },
+                    label = { Text("Phone") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -119,7 +123,7 @@ fun RegisterScreen(
                 Button(
                     onClick = {
                         if (nome.isBlank() || codigoAlerta.isBlank() || telemovel.isBlank() || email.isBlank() || password.isBlank()) {
-                            errorMessage = "Todos os campos têm de ser preenchidos"
+                            errorMessage = "All fields must be filled."
                             return@Button
                         }
 
@@ -145,15 +149,15 @@ fun RegisterScreen(
                                         }
                                         .addOnFailureListener { e ->
                                             isLoading = false
-                                            errorMessage = "Erro ao salvar dados adicionais: ${e.localizedMessage}"
+                                            errorMessage = "Error saving: ${e.localizedMessage}"
                                         }
                                 } else {
                                     isLoading = false
                                     val exception = task.exception as? FirebaseAuthException
                                     errorMessage = when (exception?.errorCode) {
-                                        "ERROR_EMAIL_ALREADY_IN_USE" -> "Este email já está registado"
-                                        "ERROR_INVALID_EMAIL" -> "Email inválido"
-                                        "ERROR_WEAK_PASSWORD" -> "Password demasiado fraca (mín. 6 caracteres)"
+                                        "ERROR_EMAIL_ALREADY_IN_USE" -> "Email Already in use"
+                                        "ERROR_INVALID_EMAIL" -> "Invalid Email"
+                                        "ERROR_WEAK_PASSWORD" -> "Password too weak (mín. 6 Characters)"
                                         else -> exception?.localizedMessage
                                     }
                                 }
@@ -168,7 +172,7 @@ fun RegisterScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Registar")
+                        Text("Register")
                     }
                 }
             }

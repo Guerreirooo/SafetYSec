@@ -1,14 +1,14 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation
 
-import android.Manifest
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,14 +19,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.GeoPoint
-import createPanicAlert
+import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.createAlert
+import pt.isec.a2023131593.AMovProjetoKotlin.model.getCurrentLocation
 
 @Composable
 fun BottomNavBar(
     navController: NavHostController,
     selectedRoute: String,
+    hasRequiredPermissions: Boolean,
+    requestPermissions: () -> Unit
 ) {
     BottomAppBar(
         modifier = Modifier.fillMaxWidth(),
@@ -40,23 +43,11 @@ fun BottomNavBar(
             val context = LocalContext.current
             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
-            val requestPermissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted ->
-                if (!isGranted) {
-                    Toast.makeText(
-                        context,
-                        "Permissão de notificações negada",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-
             IconButton(
                 onClick = { navController.navigate(Routes.DASHBOARD) }
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Schedule,
+                    imageVector = Icons.Filled.Person,
                     contentDescription = "Dashboard",
                     tint = if (selectedRoute == Routes.DASHBOARD)
                         MaterialTheme.colorScheme.primary
@@ -67,14 +58,30 @@ fun BottomNavBar(
 
             Button(
                 onClick = {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    if (!hasRequiredPermissions) {
+                        requestPermissions()
+                        Toast.makeText(
+                            context,
+                            "Location permissions and notifications are required.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
                     }
 
-                    val localizationNow = GeoPoint(0.0, 0.0)
-
-                    currentUserId?.let { uid ->
-                        createPanicAlert(context, uid, localizationNow)
+                    getCurrentLocation(context) { geoPoint ->
+                        if (geoPoint != null) {
+                            currentUserId?.let { uid ->
+                                createAlert(
+                                    context, uid, geoPoint, AlertType.PANIC
+                                )
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Unable to obtain location",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 },
                 shape = CircleShape,
@@ -93,8 +100,8 @@ fun BottomNavBar(
                 onClick = { navController.navigate(Routes.PROFILE) }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Perfil",
+                    imageVector = Icons.Filled.AccountCircle,
+                    contentDescription = "Profile",
                     tint = if (selectedRoute == Routes.PROFILE)
                         MaterialTheme.colorScheme.primary
                     else

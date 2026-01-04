@@ -17,7 +17,9 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import android.Manifest
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
@@ -34,9 +36,18 @@ fun MonitorRules(
     val auth = FirebaseAuth.getInstance()
     val currentUserId = auth.currentUser?.uid ?: return
 
+    val permissions = listOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.POST_NOTIFICATIONS
+    )
+
+    val (hasRequiredPermissions, permissionLauncher) =
+        rememberPermissionsState(permissions)
+
     var selectedItem by remember { mutableStateOf("SafetYSec") }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
+    var showCancelAlert by remember { mutableStateOf(false) }
     var editMode by remember { mutableStateOf(false) }
 
     val firestore = FirebaseFirestore.getInstance()
@@ -256,7 +267,8 @@ fun MonitorRules(
                 selectedItem = selectedItem,
                 onItemSelected = { selectedItem = it },
                 onAddMonitorClick = { showAddMonitor = true },
-                onAddProtectedClick = { showAddProtected = true }
+                onAddProtectedClick = { showAddProtected = true },
+                onCancelAlertClick = { showCancelAlert = true}
             )
         }
     ) {
@@ -274,7 +286,11 @@ fun MonitorRules(
             bottomBar = {
                 BottomNavBar(
                     navController = navController,
-                    selectedRoute = Routes.MONITOR_RULES
+                    selectedRoute = Routes.DASHBOARD,
+                    hasRequiredPermissions = hasRequiredPermissions,
+                    requestPermissions = {
+                        permissionLauncher.launch(permissions.toTypedArray())
+                    }
                 )
             }
         ) { padding ->
@@ -332,6 +348,10 @@ fun MonitorRules(
             onDismiss = { showAddProtected = false },
             onProtectedAdded = {}
         )
+    }
+
+    if(showCancelAlert){
+        CancelAlert(onDismiss = { showCancelAlert = false })
     }
 }
 

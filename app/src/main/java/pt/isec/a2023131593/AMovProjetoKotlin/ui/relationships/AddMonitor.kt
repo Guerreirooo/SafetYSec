@@ -104,7 +104,7 @@ fun AddMonitor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "ATENÇÃO!",
+                        text = "WARNING!",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.headlineSmall
                     )
@@ -112,8 +112,8 @@ fun AddMonitor(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Este é o código que o seu monitor terá de colocar para completar o processo. " +
-                                "Não feche esta caixa antes do código ser preenchido pelo monitor.",
+                        text = "This is the code that your monitor will need to insert to complete the process. " +
+                                "Do not close this box before the code has been filled in by the monitor.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )

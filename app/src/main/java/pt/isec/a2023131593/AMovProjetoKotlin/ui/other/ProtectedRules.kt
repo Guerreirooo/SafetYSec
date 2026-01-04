@@ -1,14 +1,14 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -16,16 +16,21 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,11 +46,36 @@ fun ProtectedRules(
     var selectedItem by remember { mutableStateOf("SafetYSec") }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
+    var showCancelAlert by remember { mutableStateOf(false) }
     var editMode by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val firestore = FirebaseFirestore.getInstance()
     var monitorName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    val allowedState = remember { mutableStateMapOf<String, Boolean>() }
+
+    val context = LocalContext.current
+    val permissions = buildList {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    val (hasRequiredPermissions, permissionLauncher) =
+        rememberPermissionsState(permissions)
+
+    LaunchedEffect(currentUserId) {
+        currentUserId?.let { uid ->
+            listenForAlerts(context, uid, AlertType.PANIC)
+            listenForAlerts(context, uid, AlertType.FALL)
+            listenForAlerts(context, uid, AlertType.ACCIDENT)
+            listenForAlerts(context, uid, AlertType.SPEED)
+            listenForAlerts(context, uid, AlertType.GEOFENCING)
+            listenForAlerts(context, uid, AlertType.INACTIVITY)
+        }
+    }
 
     val schedulesState = remember {
         mutableStateMapOf<String, SnapshotStateMap<Int, Pair<String, String>>>()
@@ -87,6 +117,8 @@ fun ProtectedRules(
 
                 listOf("FALL", "ACCIDENT", "GEOFENCING", "INACTIVITY", "SPEED").forEach { rule ->
                     val ruleMap = monitorMap[rule] as? Map<*, *> ?: return@forEach
+                    val allowed = ruleMap["allowed"] as? Boolean ?: false
+                    allowedState[rule] = allowed
 
                     val scheduleDays = ruleMap["scheduleDays"] as? List<*> ?: emptyList<Any>()
                     val scheduleMap = mutableStateMapOf<Int, Pair<String, String>>()
@@ -100,23 +132,39 @@ fun ProtectedRules(
                         i += 3
                     }
 
-                    val params = ruleMap["parameters"] as? List<String> ?: emptyList()
+                    val paramsFromDb = ruleMap["parameters"] as? List<String> ?: emptyList()
+
+                    val fixedParams = when (rule) {
+                        "GEOFENCING" -> listOf(
+                            paramsFromDb.getOrNull(0) ?: "",
+                            paramsFromDb.getOrNull(1) ?: ""
+                        )
+                        "SPEED" -> listOf(
+                            paramsFromDb.getOrNull(0) ?: ""
+                        )
+                        "INACTIVITY" -> listOf(
+                            paramsFromDb.getOrNull(0) ?: ""
+                        )
+                        "FALL", "ACCIDENT" -> emptyList()
+                        else -> emptyList()
+                    }
+
 
                     schedulesState[rule] = scheduleMap
-                    ruleParametersState[rule] = params.toMutableStateList()
+                    ruleParametersState[rule] = fixedParams.toMutableStateList()
 
                     originalSchedules[rule] = scheduleMap.toMap()
-                    originalParameters[rule] = params.toList()
+                    originalParameters[rule] = fixedParams.toList()
                 }
             }
     }
 
     fun saveSchedulesToFirestore() {
-        val monitorData = mutableMapOf<String, Any>()
+        val updates = mutableMapOf<String, Any>()
 
         schedulesState.forEach { (rule, scheduleMap) ->
-            val scheduleDays = mutableListOf<Any>()
 
+            val scheduleDays = mutableListOf<Any>()
             scheduleMap.forEach { (day, times) ->
                 scheduleDays.add(day)
                 scheduleDays.add(times.first)
@@ -129,25 +177,38 @@ fun ProtectedRules(
             val parametersChanged =
                 originalParameters[rule] != ruleParametersState[rule]?.toList()
 
-            val wasChanged = schedulesChanged || parametersChanged
+            if (!schedulesChanged && !parametersChanged) return@forEach
 
-            monitorData[rule] = mapOf(
-                "allowed" to if (wasChanged) false else scheduleMap.isNotEmpty(),
-                "parameters" to (ruleParametersState[rule] ?: emptyList()),
-                "scheduleDays" to scheduleDays
-            )
+            val basePath = "$currentUserId.$rule"
+
+            updates["$basePath.allowed"] = false
+            updates["$basePath.scheduleDays"] = scheduleDays
+            updates["$basePath.parameters"] =
+                ruleParametersState[rule]?.toList() ?: emptyList<String>()
         }
+
+        if (updates.isEmpty()) return
 
         firestore.collection("Rule")
             .document(monitorUid)
-            .set(mapOf(currentUserId to monitorData))
+            .update(updates)
     }
+
+    fun parameterLabelsForRule(ruleName: String): List<String> =
+        when (ruleName) {
+            "GEOFENCING" -> listOf("GPS Coordinates", "Radius")
+            "SPEED" -> listOf("Max Speed (km/h)")
+            "INACTIVITY" -> listOf("Duration (minutes)")
+            else -> emptyList()
+        }
+
 
     @Composable
     fun ExpandableSchedule(
         ruleName: String,
         schedule: SnapshotStateMap<Int, Pair<String, String>>,
-        parameters: SnapshotStateList<String>
+        parameters: SnapshotStateList<String>,
+        allowed: Boolean
     ) {
         var expanded by remember { mutableStateOf(false) }
 
@@ -178,12 +239,26 @@ fun ProtectedRules(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(dayName)
+                                val paramsValid = areParametersValid(ruleName, parameters)
+
                                 Switch(
                                     checked = enabled,
                                     onCheckedChange = {
-                                        if (editMode) {
-                                            if (!it) schedule.remove(day)
-                                            else schedule[day] = "08:00" to "17:00"
+                                        if (!editMode) return@Switch
+
+                                        if (it && !paramsValid) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    "Please fill all required parameters first"
+                                                )
+                                            }
+                                            return@Switch
+                                        }
+
+                                        if (!it) {
+                                            schedule.remove(day)
+                                        } else {
+                                            schedule[day] = "08:00" to "17:00"
                                         }
                                     },
                                     enabled = editMode
@@ -224,35 +299,48 @@ fun ProtectedRules(
                     ) {
                         Text("Parameters", style = MaterialTheme.typography.titleMedium)
 
-                        parameters.forEachIndexed { index, param ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                OutlinedTextField(
-                                    value = param,
-                                    onValueChange = { if (editMode) parameters[index] = it },
-                                    enabled = editMode,
-                                    label = { Text("Parameter") },
-                                    modifier = Modifier.weight(1f)
-                                )
+                        if (parameters.isEmpty()) {
+                            Text(
+                                text = "No parameters",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        } else {
+                            val labels = parameterLabelsForRule(ruleName)
 
-                                if (editMode) {
-                                    IconButton(onClick = { parameters.removeAt(index) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                    }
+                            parameters.forEachIndexed { index, param ->
+                                val displayValue =
+                                    if (editMode) param
+                                    else if (allowed) param
+                                    else ""
+
+                                if (!areParametersValid(ruleName, parameters) && editMode) {
+                                    Text(
+                                        text = "All parameters must be filled to enable schedules",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
                                 }
-                            }
-                        }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = labels.getOrNull(index) ?: "Parameter",
+                                        modifier = Modifier.width(140.dp),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
 
-                        if (editMode) {
-                            TextButton(
-                                onClick = { parameters.add("") },
-                                modifier = Modifier.align(Alignment.End)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add")
-                                Spacer(Modifier.width(4.dp))
-                                Text("Add parameter")
+                                    OutlinedTextField(
+                                        value = displayValue,
+                                        onValueChange = { if (editMode) parameters[index] = it },
+                                        enabled = editMode,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -271,11 +359,13 @@ fun ProtectedRules(
                 selectedItem = selectedItem,
                 onItemSelected = { selectedItem = it },
                 onAddMonitorClick = { showAddMonitor = true },
-                onAddProtectedClick = { showAddProtected = true }
+                onAddProtectedClick = { showAddProtected = true },
+                onCancelAlertClick = { showCancelAlert = true}
             )
         }
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text("Monitorization Rules") },
@@ -287,7 +377,14 @@ fun ProtectedRules(
                 )
             },
             bottomBar = {
-                BottomNavBar(navController, Routes.MONITOR_RULES)
+                BottomNavBar(
+                    navController = navController,
+                    selectedRoute = Routes.DASHBOARD,
+                    hasRequiredPermissions = hasRequiredPermissions,
+                    requestPermissions = {
+                        permissionLauncher.launch(permissions.toTypedArray())
+                    }
+                )
             }
         ) { padding ->
             Column(
@@ -310,7 +407,8 @@ fun ProtectedRules(
                     ExpandableSchedule(
                         ruleName = rule,
                         schedule = schedule,
-                        parameters = ruleParametersState[rule]!!
+                        parameters = ruleParametersState[rule]!!,
+                        allowed = allowedState[rule] == true
                     )
                 }
 
@@ -340,4 +438,16 @@ fun ProtectedRules(
             onProtectedAdded = {}
         )
     }
+
+    if(showCancelAlert){
+        CancelAlert(onDismiss = { showCancelAlert = false })
+    }
 }
+
+fun areParametersValid(ruleName: String, parameters: List<String>): Boolean =
+    when (ruleName) {
+        "GEOFENCING" -> parameters.size == 2 && parameters.all { it.isNotBlank() }
+        "SPEED" -> parameters.size == 1 && parameters[0].isNotBlank()
+        "INACTIVITY" -> parameters.size == 1 && parameters[0].isNotBlank()
+        else -> true
+    }

@@ -1,5 +1,7 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,17 +34,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +65,13 @@ fun ProfileScreen(
     var selectedItem by remember { mutableStateOf("SafetYSec") }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
+    var showCancelAlert by remember { mutableStateOf(false) }
+    var monitors by remember { mutableStateOf<List<String>>(emptyList()) }
+    var protected by remember { mutableStateOf<List<String>>(emptyList()) }
 
     val userId = auth.currentUser?.uid
     val email = auth.currentUser?.email ?: ""
+    val context = LocalContext.current
 
     var nome by remember { mutableStateOf("") }
     var codigoAlerta by remember { mutableStateOf("") }
@@ -67,6 +79,27 @@ fun ProfileScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isEditing by remember { mutableStateOf(false) }
+
+    val permissions = buildList {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    val (hasRequiredPermissions, permissionLauncher) =
+        rememberPermissionsState(permissions)
+
+    LaunchedEffect(userId) {
+        userId?.let { uid ->
+            listenForAlerts(context, uid, AlertType.PANIC)
+            listenForAlerts(context, uid, AlertType.FALL)
+            listenForAlerts(context, uid, AlertType.ACCIDENT)
+            listenForAlerts(context, uid, AlertType.SPEED)
+            listenForAlerts(context, uid, AlertType.GEOFENCING)
+            listenForAlerts(context, uid, AlertType.INACTIVITY)
+        }
+    }
 
     LaunchedEffect(userId) {
         if (userId != null) {
@@ -82,14 +115,16 @@ fun ProfileScreen(
                     isLoading = false
                 }
                 .addOnFailureListener { e ->
-                    errorMessage = "Erro ao carregar dados: ${e.localizedMessage}"
+                    errorMessage = "Error loading data: ${e.localizedMessage}"
                     isLoading = false
                 }
         } else {
-            errorMessage = "Usuário não autenticado"
+            errorMessage = "User not logged"
             isLoading = false
         }
     }
+
+    val scrollState = rememberScrollState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -101,14 +136,15 @@ fun ProfileScreen(
                 selectedItem = selectedItem,
                 onItemSelected = { selectedItem = it },
                 onAddMonitorClick = { showAddMonitor = true },
-                onAddProtectedClick = { showAddProtected = true }
+                onAddProtectedClick = { showAddProtected = true },
+                onCancelAlertClick = { showCancelAlert = true }
             )
         }
     ) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Perfil") },
+                    title = { Text("Profile") },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
@@ -120,7 +156,12 @@ fun ProfileScreen(
                 )
             },
             bottomBar = {
-                BottomNavBar(navController = navController, selectedRoute = Routes.PROFILE)
+                BottomNavBar(
+                    navController = navController,
+                    selectedRoute = Routes.DASHBOARD,
+                    hasRequiredPermissions = hasRequiredPermissions,
+                    requestPermissions = { permissionLauncher.launch(permissions.toTypedArray()) }
+                )
             },
             content = { padding ->
                 Box(
@@ -135,7 +176,9 @@ fun ProfileScreen(
                     } else {
                         Column(
                             horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
                         ) {
                             OutlinedTextField(
                                 value = email,
@@ -158,12 +201,12 @@ fun ProfileScreen(
                                             .addOnCompleteListener { task ->
                                                 isLoading = false
                                                 errorMessage = if (task.isSuccessful) {
-                                                    "Email de recuperação enviado. Verifica a tua caixa de entrada."
+                                                    "Recovery email sent. Please check your inbox."
                                                 } else {
                                                     val exception = task.exception as? FirebaseAuthException
                                                     when (exception?.errorCode) {
-                                                        "ERROR_INVALID_EMAIL" -> "Email inválido"
-                                                        "ERROR_USER_NOT_FOUND" -> "Não existe conta associada a este email"
+                                                        "ERROR_INVALID_EMAIL" -> "Invalid Email"
+                                                        "ERROR_USER_NOT_FOUND" -> "There is no account associated with this email address."
                                                         else -> exception?.localizedMessage
                                                     }
                                                 }
@@ -176,7 +219,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = errorMessage!!,
-                                    color = if (errorMessage!!.contains("enviado"))
+                                    color = if (errorMessage!!.contains("sent"))
                                         MaterialTheme.colorScheme.secondary
                                     else
                                         MaterialTheme.colorScheme.error,
@@ -189,7 +232,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = nome,
                                 onValueChange = { nome = it },
-                                label = { Text("Nome") },
+                                label = { Text("Name") },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -199,7 +242,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = codigoAlerta,
                                 onValueChange = { codigoAlerta = it },
-                                label = { Text("Código Alerta") },
+                                label = { Text("Alert Code") },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -209,7 +252,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = telemovel,
                                 onValueChange = { telemovel = it },
-                                label = { Text("Telemóvel") },
+                                label = { Text("Phone") },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -230,7 +273,8 @@ fun ProfileScreen(
                                                 .update(updatedData as Map<String, Any>)
                                                 .addOnSuccessListener { isEditing = false }
                                                 .addOnFailureListener { e ->
-                                                    errorMessage = "Erro ao salvar alterações: ${e.localizedMessage}"
+                                                    errorMessage =
+                                                        "Error saving: ${e.localizedMessage}"
                                                 }
                                         }
                                     } else {
@@ -241,7 +285,21 @@ fun ProfileScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp)
                             ) {
-                                Text(if (isEditing) "Salvar" else "Edit")
+                                Text(if (isEditing) "Save" else "Edit")
+                            }
+
+                            Button(
+                                onClick = {
+                                    auth.signOut()
+                                    navController.navigate(Routes.LOGIN) {
+                                        popUpTo(Routes.DASHBOARD) { inclusive = true }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 16.dp)
+                            ) {
+                                Text("Logout")
                             }
                         }
                     }
@@ -251,15 +309,27 @@ fun ProfileScreen(
     }
 
     if (showAddMonitor) {
-        AddMonitor(
-            onDismiss = { showAddMonitor = false }
-        )
+        AddMonitor(onDismiss = { showAddMonitor = false })
     }
 
     if (showAddProtected) {
         AddProtected(
             onDismiss = { showAddProtected = false },
-            onProtectedAdded = {}
+            onProtectedAdded = {
+                userId?.let { uid ->
+                    firestore.collection("Relationship")
+                        .document(uid)
+                        .get()
+                        .addOnSuccessListener { doc ->
+                            monitors = doc.get("monitor") as? List<String> ?: emptyList()
+                            protected = doc.get("protected") as? List<String> ?: emptyList()
+                        }
+                }
+            }
         )
+    }
+
+    if (showCancelAlert) {
+        CancelAlert(onDismiss = { showCancelAlert = false })
     }
 }

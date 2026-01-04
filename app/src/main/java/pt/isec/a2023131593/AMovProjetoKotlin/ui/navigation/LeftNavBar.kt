@@ -26,12 +26,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
+private enum class MenuDestinations {
+    ASSOCIATE, ADD_PROTECTED, PROPOSALS, HISTORY, CANCEL
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeftNavBar(
@@ -44,12 +49,13 @@ fun LeftNavBar(
     onAddProtectedClick: () -> Unit,
     onCancelAlertClick: () -> Unit
 ) {
+
     val menuItems = listOf(
-        "Associate Monitor",
-        "Add Protected",
-        "Monitoring Proposals",
-        "Alerts History",
-        "Cancel Alert"
+        MenuDestinations.ASSOCIATE to R.string.menu_associate_monitor,
+        MenuDestinations.ADD_PROTECTED to R.string.menu_add_protected,
+        MenuDestinations.PROPOSALS to R.string.menu_monitoring_proposals,
+        MenuDestinations.HISTORY to R.string.menu_alerts_history,
+        MenuDestinations.CANCEL to R.string.menu_cancel_alert
     )
 
     val scrollState = rememberScrollState()
@@ -60,7 +66,7 @@ fun LeftNavBar(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "SafetYSec",
+            text = stringResource(id = R.string.app_name),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(16.dp)
         )
@@ -68,45 +74,44 @@ fun LeftNavBar(
         Divider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        menuItems.forEach { item ->
+        menuItems.forEach { (destination, stringId) ->
+            val label = stringResource(id = stringId)
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        onItemSelected(item)
+                        onItemSelected(label)
                         scope.launch { drawerState.close() }
 
-                        when (item) {
-                            "Associate Monitor" -> onAddMonitorClick()
-                            "Add Protected" -> onAddProtectedClick()
-                            "Monitoring Proposals" -> navController.navigate(Routes.PROPOSAL_RULES)
-                            "Alerts History" -> navController.navigate(Routes.HISTORY)
-                            "Cancel Alert" -> onCancelAlertClick()
+                        when (destination) {
+                            MenuDestinations.ASSOCIATE -> onAddMonitorClick()
+                            MenuDestinations.ADD_PROTECTED -> onAddProtectedClick()
+                            MenuDestinations.PROPOSALS -> navController.navigate(Routes.PROPOSAL_RULES)
+                            MenuDestinations.HISTORY -> navController.navigate(Routes.HISTORY)
+                            MenuDestinations.CANCEL -> onCancelAlertClick()
                         }
                     }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val icon = when (item) {
-                    "Associate Monitor" -> Icons.Default.PersonAdd
-                    "Add Protected" -> Icons.Filled.Add
-                    "Monitoring Proposals" -> Icons.Default.Description
-                    "Alerts History" -> Icons.Filled.Schedule
-                    "Cancel Alert" -> Icons.Default.Cancel
-                    else -> null
+                val icon = when (destination) {
+                    MenuDestinations.ASSOCIATE -> Icons.Default.PersonAdd
+                    MenuDestinations.ADD_PROTECTED -> Icons.Filled.Add
+                    MenuDestinations.PROPOSALS -> Icons.Default.Description
+                    MenuDestinations.HISTORY -> Icons.Filled.Schedule
+                    MenuDestinations.CANCEL -> Icons.Default.Cancel
                 }
 
-                icon?.let {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = item,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = item,
+                    text = label,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

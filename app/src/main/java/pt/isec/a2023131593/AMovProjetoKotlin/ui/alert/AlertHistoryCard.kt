@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.alert
 
 import android.icu.text.SimpleDateFormat
 import androidx.compose.foundation.layout.Box
@@ -16,9 +16,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import pt.isec.a2023131593.AMovProjetoKotlin.model.HistoryItem
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.HistoryItem
 import java.util.Locale
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
 @Composable
 fun AlertHistoryCard(item: HistoryItem) {
@@ -40,7 +42,10 @@ fun AlertHistoryCard(item: HistoryItem) {
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = if (item.codeWritted) "Canceled" else "Sent",
+                text = if (item.codeWritted)
+                    stringResource(id = R.string.status_canceled)
+                else
+                    stringResource(id = R.string.status_sent),
                 color = Color.Black,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
@@ -50,15 +55,20 @@ fun AlertHistoryCard(item: HistoryItem) {
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Type: ${item.type}",
-                    style = MaterialTheme.typography.titleMedium
+                    text = stringResource(id = R.string.label_type_prefix, item.type),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Black
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Date: ${formatter.format(item.date.toDate())}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(
+                        id = R.string.label_date_prefix,
+                        formatter.format(item.date.toDate())
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Black
                 )
             }
         }

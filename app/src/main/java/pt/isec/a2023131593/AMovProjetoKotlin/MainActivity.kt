@@ -1,12 +1,9 @@
 package pt.isec.a2023131593.AMovProjetoKotlin
 
-import android.Manifest
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.FirebaseApp

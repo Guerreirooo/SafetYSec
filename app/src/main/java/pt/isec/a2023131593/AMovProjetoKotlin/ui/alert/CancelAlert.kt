@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.alert
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -24,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -32,7 +30,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.platform.LocalContext
-import pt.isec.a2023131593.AMovProjetoKotlin.model.showAlertCanceledNotification
+import androidx.compose.ui.res.stringResource
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.showAlertCanceledNotification
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import kotlin.collections.get
+import kotlin.collections.iterator
 
 enum class CancelResult {
     INVALID_CODE,
@@ -40,6 +42,7 @@ enum class CancelResult {
     TIME_EXPIRED,
     SUCCESS
 }
+
 @Composable
 fun CancelAlert(
     onDismiss: () -> Unit
@@ -70,7 +73,10 @@ fun CancelAlert(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Fechar")
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(id = R.string.desc_close)
+                    )
                 }
 
                 Column(
@@ -81,7 +87,7 @@ fun CancelAlert(
                 ) {
 
                     Text(
-                        text = "Insert the alert code to cancel the alert",
+                        text = stringResource(id = R.string.title_cancel_alert),
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )
@@ -91,12 +97,9 @@ fun CancelAlert(
                     OutlinedTextField(
                         value = code,
                         onValueChange = { code = it },
-                        label = { Text("Alert Code") },
+                        label = { Text(stringResource(id = R.string.label_alert_code)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -159,6 +162,8 @@ fun CancelAlert(
                                                 hasTimePassedAlert -> CancelResult.TIME_EXPIRED
                                                 else -> CancelResult.NO_ALERTS
                                             }
+
+                                            if (result == CancelResult.SUCCESS) onDismiss()
                                         }
                                 }
                                 .addOnFailureListener {
@@ -167,29 +172,27 @@ fun CancelAlert(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Confirm")
+                        Text(stringResource(id = R.string.btn_confirm))
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     result?.let {
-                        val (text, color) = when (it) {
-                            CancelResult.INVALID_CODE ->
-                                "Invalid Code" to MaterialTheme.colorScheme.error
-                            CancelResult.NO_ALERTS ->
-                                "No Alerts to cancel in the moment" to MaterialTheme.colorScheme.error
-                            CancelResult.TIME_EXPIRED ->
-                                "Monitor already notificated" to MaterialTheme.colorScheme.error
-                            CancelResult.SUCCESS ->
-                                "" to MaterialTheme.colorScheme.primary
+                        val text = when (it) {
+                            CancelResult.INVALID_CODE -> stringResource(id = R.string.error_invalid_code)
+                            CancelResult.NO_ALERTS -> stringResource(id = R.string.error_no_alerts)
+                            CancelResult.TIME_EXPIRED -> stringResource(id = R.string.error_time_expired)
+                            CancelResult.SUCCESS -> ""
                         }
 
-                        Text(
-                            text = text,
-                            color = color,
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = TextAlign.Center
-                        )
+                        if (text.isNotEmpty()) {
+                            Text(
+                                text = text,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }

@@ -8,17 +8,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.authentication.LoginScreen
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.authentication.RegisterScreen
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.home.HomeScreen
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.AlertHistory
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.CancelAlert
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.MonitorRules
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.ProfileScreen
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.ProposalRules
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.ProtectedInfo
-import pt.isec.a2023131593.AMovProjetoKotlin.ui.other.ProtectedRules
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.AlertHistory
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.LastAlert
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.rule.MonitorRules
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.profile.ProfileScreen
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.rule.ProposalRules
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.ProtectedInfo
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.rule.ProtectedRules
 
 @Composable
 fun AppNav(navController: NavHostController, auth: FirebaseAuth) {
@@ -110,6 +110,14 @@ fun AppNav(navController: NavHostController, auth: FirebaseAuth) {
                 protectedUid = protectedUid,
                 navController = navController,
             )
+        }
+
+        composable(
+            route = "${Routes.LAST_ALERT}/{protectedUid}",
+            arguments = listOf(navArgument("protectedUid") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val protectedUid = backStackEntry.arguments?.getString("protectedUid") ?: ""
+            LastAlert(protectedUid = protectedUid, navController = navController)
         }
     }
 }

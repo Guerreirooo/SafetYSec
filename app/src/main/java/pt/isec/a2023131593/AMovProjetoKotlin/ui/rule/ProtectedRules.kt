@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.rule
 
 import android.Manifest
 import android.os.Build
@@ -17,20 +17,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.AlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.listenForAlerts
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
 import kotlin.collections.emptyList
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.CancelAlert
+import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +47,8 @@ fun ProtectedRules(
     val auth = FirebaseAuth.getInstance()
     val currentUserId = auth.currentUser?.uid ?: return
 
-    var selectedItem by remember { mutableStateOf("SafetYSec") }
+    val defaultTitle = stringResource(id = R.string.app_name)
+    var selectedItem by remember { mutableStateOf(defaultTitle) }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
     var showCancelAlert by remember { mutableStateOf(false) }
@@ -62,6 +67,18 @@ fun ProtectedRules(
             add(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
+
+    val translatedDays = listOf(
+        1 to stringResource(id = R.string.day_1),
+        2 to stringResource(id = R.string.day_2),
+        3 to stringResource(id = R.string.day_3),
+        4 to stringResource(id = R.string.day_4),
+        5 to stringResource(id = R.string.day_5),
+        6 to stringResource(id = R.string.day_6),
+        7 to stringResource(id = R.string.day_7)
+    )
+
+    val errorFillParameters = stringResource(id = R.string.error_fill_parameters)
 
     val (hasRequiredPermissions, permissionLauncher) =
         rememberPermissionsState(permissions)
@@ -194,11 +211,12 @@ fun ProtectedRules(
             .update(updates)
     }
 
+    @Composable
     fun parameterLabelsForRule(ruleName: String): List<String> =
         when (ruleName) {
-            "GEOFENCING" -> listOf("GPS Coordinates", "Radius")
-            "SPEED" -> listOf("Max Speed (km/h)")
-            "INACTIVITY" -> listOf("Duration (minutes)")
+            "GEOFENCING" -> listOf(stringResource(id = R.string.label_gps_coordinates), stringResource(id = R.string.label_radius))
+            "SPEED" -> listOf(stringResource(id = R.string.label_max_speed))
+            "INACTIVITY" -> listOf(stringResource(id = R.string.label_duration_minutes))
             else -> emptyList()
         }
 
@@ -225,7 +243,7 @@ fun ProtectedRules(
                 if (expanded) {
                     Spacer(Modifier.height(12.dp))
 
-                    daysOfWeek.forEach { (day, dayName) ->
+                    translatedDays.forEach { (day, dayName) ->
                         val enabled = schedule.containsKey(day)
 
                         Column(
@@ -248,9 +266,7 @@ fun ProtectedRules(
 
                                         if (it && !paramsValid) {
                                             scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    "Please fill all required parameters first"
-                                                )
+                                                snackbarHostState.showSnackbar(errorFillParameters)
                                             }
                                             return@Switch
                                         }
@@ -273,14 +289,14 @@ fun ProtectedRules(
                                         value = start,
                                         onValueChange = { if (editMode) schedule[day] = it to end },
                                         enabled = editMode,
-                                        label = { Text("Start") },
+                                        label = { Text(stringResource(id = R.string.label_start)) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     OutlinedTextField(
                                         value = end,
                                         onValueChange = { if (editMode) schedule[day] = start to it },
                                         enabled = editMode,
-                                        label = { Text("End") },
+                                        label = { Text(stringResource(id = R.string.label_end)) },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -297,11 +313,11 @@ fun ProtectedRules(
                             .background(Color(0xFFEFEFEF))
                             .padding(8.dp)
                     ) {
-                        Text("Parameters", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = R.string.label_parameters), style = MaterialTheme.typography.titleMedium)
 
                         if (parameters.isEmpty()) {
                             Text(
-                                text = "No parameters",
+                                text = stringResource(id = R.string.no_parameters),
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(top = 8.dp)
                             )
@@ -316,7 +332,7 @@ fun ProtectedRules(
 
                                 if (!areParametersValid(ruleName, parameters) && editMode) {
                                     Text(
-                                        text = "All parameters must be filled to enable schedules",
+                                        text = stringResource(id = R.string.error_parameters_required),
                                         color = MaterialTheme.colorScheme.error,
                                         style = MaterialTheme.typography.bodySmall,
                                         modifier = Modifier.padding(top = 8.dp)
@@ -368,10 +384,10 @@ fun ProtectedRules(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Monitorization Rules") },
+                    title = { Text(stringResource(id = R.string.title_monitor_rules)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(id = R.string.desc_menu))
                         }
                     }
                 )
@@ -393,12 +409,12 @@ fun ProtectedRules(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("Monitor Name", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(id = R.string.label_monitor_name), style = MaterialTheme.typography.labelLarge)
                 Text(monitorName, style = MaterialTheme.typography.titleMedium)
 
                 Spacer(Modifier.height(16.dp))
 
-                Text("Phone Number", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(id = R.string.label_phone_number), style = MaterialTheme.typography.labelLarge)
                 Text(phoneNumber, style = MaterialTheme.typography.titleMedium)
 
                 Spacer(Modifier.height(24.dp))
@@ -421,7 +437,12 @@ fun ProtectedRules(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (editMode) "Confirm" else "Propose Changes")
+                    Text(
+                        text = if (editMode)
+                            stringResource(id = R.string.btn_confirm)
+                        else
+                            stringResource(id = R.string.btn_propose_changes)
+                    )
                 }
             }
         }

@@ -24,11 +24,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
 @Composable
 fun AddMonitor(
@@ -93,7 +96,7 @@ fun AddMonitor(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Fechar"
+                        contentDescription = stringResource(id = R.string.desc_close)
                     )
                 }
 
@@ -104,7 +107,7 @@ fun AddMonitor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "WARNING!",
+                        text = stringResource(id = R.string.title_warning),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.headlineSmall
                     )
@@ -112,8 +115,7 @@ fun AddMonitor(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "This is the code that your monitor will need to insert to complete the process. " +
-                                "Do not close this box before the code has been filled in by the monitor.",
+                        text = stringResource(id = R.string.msg_monitor_code_instruction),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -122,7 +124,8 @@ fun AddMonitor(
 
                     Text(
                         text = monitorCode!!,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

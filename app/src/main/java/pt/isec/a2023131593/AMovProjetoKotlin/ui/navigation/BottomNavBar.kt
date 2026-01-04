@@ -6,23 +6,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
-import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.model.createAlert
-import pt.isec.a2023131593.AMovProjetoKotlin.model.getCurrentLocation
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.AlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.createAlert
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.getCurrentLocation
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
 @Composable
 fun BottomNavBar(
@@ -31,6 +30,10 @@ fun BottomNavBar(
     hasRequiredPermissions: Boolean,
     requestPermissions: () -> Unit
 ) {
+    val context = LocalContext.current
+    val permissionErrorMsg = stringResource(id = R.string.error_permissions)
+    val locationErrorMsg = stringResource(id = R.string.error_location)
+
     BottomAppBar(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp)
@@ -40,7 +43,6 @@ fun BottomNavBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val context = LocalContext.current
             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
             IconButton(
@@ -48,7 +50,7 @@ fun BottomNavBar(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Person,
-                    contentDescription = "Dashboard",
+                    contentDescription = stringResource(id = R.string.desc_dashboard),
                     tint = if (selectedRoute == Routes.DASHBOARD)
                         MaterialTheme.colorScheme.primary
                     else
@@ -62,7 +64,7 @@ fun BottomNavBar(
                         requestPermissions()
                         Toast.makeText(
                             context,
-                            "Location permissions and notifications are required.",
+                            permissionErrorMsg,
                             Toast.LENGTH_SHORT
                         ).show()
                         return@Button
@@ -78,7 +80,7 @@ fun BottomNavBar(
                         } else {
                             Toast.makeText(
                                 context,
-                                "Unable to obtain location",
+                                locationErrorMsg,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -90,7 +92,7 @@ fun BottomNavBar(
                 modifier = Modifier.size(120.dp)
             ) {
                 Text(
-                    text = "PANIC !",
+                    text = stringResource(id = R.string.btn_panic),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -101,7 +103,7 @@ fun BottomNavBar(
             ) {
                 Icon(
                     imageVector = Icons.Filled.AccountCircle,
-                    contentDescription = "Profile",
+                    contentDescription = stringResource(id = R.string.desc_profile),
                     tint = if (selectedRoute == Routes.PROFILE)
                         MaterialTheme.colorScheme.primary
                     else

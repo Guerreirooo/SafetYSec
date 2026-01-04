@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.model
+package pt.isec.a2023131593.AMovProjetoKotlin.model.enums
 
 enum class AlertType(val field: String, val title: String) {
     PANIC("PANIC", "PANIC"),

@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -36,7 +37,8 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
 @Composable
 fun MonitorCard(
@@ -81,14 +83,17 @@ fun MonitorCard(
                 }
 
                 IconButton(onClick = { showDialog = true }) {
-                    Icon(Icons.Default.Remove, contentDescription = "Remove Monitor")
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = stringResource(id = R.string.desc_remove_monitor)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Monitoring Options",
+                text = stringResource(id = R.string.label_monitoring_options),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
                     navController.navigate(
@@ -111,7 +116,10 @@ fun MonitorCard(
                         onClick = { showDialog = false },
                         modifier = Modifier.align(Alignment.TopEnd)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Fechar")
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(id = R.string.desc_close)
+                        )
                     }
 
                     Column(
@@ -121,7 +129,7 @@ fun MonitorCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Are you sure you want to remove this monitor?",
+                            text = stringResource(id = R.string.confirm_remove_monitor),
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center
                         )
@@ -147,7 +155,7 @@ fun MonitorCard(
                             },
                             modifier = Modifier.fillMaxWidth(0.6f)
                         ) {
-                            Text("Confirm")
+                            Text(text = stringResource(id = R.string.btn_confirm))
                         }
                     }
                 }

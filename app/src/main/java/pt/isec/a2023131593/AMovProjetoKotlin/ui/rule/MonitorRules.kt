@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.rule
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,12 +18,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import android.Manifest
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
+import androidx.compose.ui.res.stringResource
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.CancelAlert
+import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +48,8 @@ fun MonitorRules(
     val (hasRequiredPermissions, permissionLauncher) =
         rememberPermissionsState(permissions)
 
-    var selectedItem by remember { mutableStateOf("SafetYSec") }
+    val defaultTitle = stringResource(id = R.string.app_name)
+    var selectedItem by remember { mutableStateOf(defaultTitle) }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
     var showCancelAlert by remember { mutableStateOf(false) }
@@ -53,6 +58,16 @@ fun MonitorRules(
     val firestore = FirebaseFirestore.getInstance()
     var monitorName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+
+    val translatedDays = listOf(
+        1 to stringResource(id = R.string.day_1),
+        2 to stringResource(id = R.string.day_2),
+        3 to stringResource(id = R.string.day_3),
+        4 to stringResource(id = R.string.day_4),
+        5 to stringResource(id = R.string.day_5),
+        6 to stringResource(id = R.string.day_6),
+        7 to stringResource(id = R.string.day_7)
+    )
 
     var schedules by remember {
         mutableStateOf<Map<String, MutableMap<Int, Pair<String, String>>>>(
@@ -134,6 +149,8 @@ fun MonitorRules(
         parameters: List<String>
     ) {
         var expanded by remember { mutableStateOf(false) }
+        val rulesRequiringParams = listOf("GEOFENCING", "SPEED", "INACTIVITY")
+        val needsParameters = ruleName in rulesRequiringParams && parameters.isEmpty()
 
         Card(
             modifier = Modifier
@@ -143,10 +160,21 @@ fun MonitorRules(
             elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(ruleName, style = MaterialTheme.typography.titleLarge)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(ruleName, style = MaterialTheme.typography.titleLarge)
+                    if (needsParameters && editMode) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "(Necessita parâmetros)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Red
+                        )
+                    }
+                }
+
                 if (expanded) {
                     Spacer(modifier = Modifier.height(12.dp))
-                    daysOfWeek.forEach { (dayNumber, dayName) ->
+                    translatedDays.forEach { (dayNumber, dayName) ->
                         val isEnabled = schedule.containsKey(dayNumber)
                         val hours = schedule[dayNumber]
 
@@ -158,6 +186,9 @@ fun MonitorRules(
                                 .padding(8.dp)
                         ) {
                             var toggleState by remember { mutableStateOf(isEnabled) }
+
+                            LaunchedEffect(isEnabled) { toggleState = isEnabled }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,14 +197,17 @@ fun MonitorRules(
                                 Text(dayName)
                                 Switch(
                                     checked = toggleState,
-                                    onCheckedChange = {
+                                    onCheckedChange = { isChecked ->
                                         if (editMode) {
-                                            toggleState = it
-                                            if (!it) schedule.remove(dayNumber)
-                                            else schedule[dayNumber] = "08:00" to "17:00"
+                                             if (isChecked && needsParameters) {
+                                             } else {
+                                                toggleState = isChecked
+                                                if (!isChecked) schedule.remove(dayNumber)
+                                                else schedule[dayNumber] = "08:00" to "17:00"
+                                            }
                                         }
                                     },
-                                    enabled = editMode
+                                    enabled = editMode && !(needsParameters && !toggleState)
                                 )
                             }
 
@@ -187,26 +221,30 @@ fun MonitorRules(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("Start hour", style = MaterialTheme.typography.labelMedium)
+                                        Text(stringResource(id = R.string.label_start_hour), style = MaterialTheme.typography.labelMedium)
                                         OutlinedTextField(
                                             value = startState.value,
-                                            onValueChange = { startState.value = it },
+                                            onValueChange = {
+                                                startState.value = it
+                                                schedule[dayNumber] = it to endState.value
+                                            },
                                             enabled = editMode,
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("End time", style = MaterialTheme.typography.labelMedium)
+                                        Text(stringResource(id = R.string.label_end_time), style = MaterialTheme.typography.labelMedium)
                                         OutlinedTextField(
                                             value = endState.value,
-                                            onValueChange = { endState.value = it },
+                                            onValueChange = {
+                                                endState.value = it
+                                                schedule[dayNumber] = startState.value to it
+                                            },
                                             enabled = editMode,
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }
-
-                                schedule[dayNumber] = startState.value to endState.value
                             }
                         }
                     }
@@ -218,9 +256,13 @@ fun MonitorRules(
                             .background(Color(0xFFEFEFEF))
                             .padding(8.dp)
                     ) {
-                        Text("Parameters", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = R.string.label_parameters), style = MaterialTheme.typography.titleMedium)
                         if (parameters.isEmpty()) {
-                            Text("No parameters", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                stringResource(id = R.string.no_parameters),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (ruleName in rulesRequiringParams) Color.Red else Color.Unspecified
+                            )
                         } else {
                             parameters.forEach { param ->
                                 Text(param, style = MaterialTheme.typography.bodyLarge)
@@ -275,10 +317,10 @@ fun MonitorRules(
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Monitorization Rules") },
+                    title = { Text(stringResource(id = R.string.title_monitor_rules)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(id = R.string.desc_menu))
                         }
                     }
                 )
@@ -302,12 +344,12 @@ fun MonitorRules(
                     .padding(16.dp)
                     .verticalScroll(scrollState)
             ) {
-                Text("Monitor Name", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(id = R.string.label_monitor_name), style = MaterialTheme.typography.labelLarge)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(monitorName, style = MaterialTheme.typography.titleMedium)
 
                 Spacer(modifier = Modifier.height(24.dp))
-                Text("Phone Number", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(id = R.string.label_phone_number), style = MaterialTheme.typography.labelLarge)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(phoneNumber, style = MaterialTheme.typography.titleMedium)
 
@@ -332,7 +374,12 @@ fun MonitorRules(
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
-                    Text(if (editMode) "Finish Edit" else "Edit")
+                    Text(
+                        text = if (editMode)
+                            stringResource(id = R.string.btn_finish_edit)
+                        else
+                            stringResource(id = R.string.btn_edit)
+                    )
                 }
             }
         }
@@ -354,13 +401,3 @@ fun MonitorRules(
         CancelAlert(onDismiss = { showCancelAlert = false })
     }
 }
-
-val daysOfWeek = listOf(
-    1 to "Sunday",
-    2 to "Monday",
-    3 to "Tuesday",
-    4 to "Wednesday",
-    5 to "Thursday",
-    6 to "Friday",
-    7 to "Saturday"
-)

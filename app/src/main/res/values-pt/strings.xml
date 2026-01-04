@@ -1,0 +1,159 @@
+<resources>
+    <string name="app_name">SafetYSec</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Palavra-passe</string>
+    <string name="btn_login">Entrar</string>
+    <string name="btn_create_account">Criar conta</string>
+    <string name="btn_forget_password">Esqueci-me da password</string>
+    <string name="error_empty_fields">Email e password têm de ser preenchidos</string>
+    <string name="error_invalid_credentials">Email ou password incorretos</string>
+    <string name="error_invalid_email">Email inválido</string>
+    <string name="error_user_disabled">Conta desativada</string>
+    <string name="error_reset_email_empty">Introduz o email para recuperar a password</string>
+    <string name="error_user_not_found">Não existe conta associada a este email</string>
+    <string name="info_reset_sent">Email de recuperação enviado. Verifica a tua caixa de entrada.</string>
+
+    <string name="desc_back">Voltar</string>
+    <string name="label_name">Nome</string>
+    <string name="label_alert_code">Código de Alerta</string>
+    <string name="label_phone">Telemóvel</string>
+    <string name="btn_register">Registar</string>
+    <string name="error_all_fields">Todos os campos devem ser preenchidos.</string>
+    <string name="error_email_in_use">Este email já está em uso</string>
+    <string name="error_weak_password">Palavra-passe muito fraca (mín. 6 Caracteres)</string>
+    <string name="error_saving">Erro ao guardar: %1$s</string>
+
+    <string name="menu_associate_monitor">Associar Monitor</string>
+    <string name="menu_add_protected">Adicionar Protegido</string>
+    <string name="menu_monitoring_proposals">Propostas de Monitorização</string>
+    <string name="menu_alerts_history">Histórico de Alertas</string>
+    <string name="menu_cancel_alert">Cancelar Alerta</string>
+
+    <string name="desc_dashboard">Painel Principal</string>
+    <string name="desc_profile">Perfil</string>
+    <string name="btn_panic">PÂNICO !</string>
+    <string name="error_permissions">São necessárias permissões de localização e notificações.</string>
+    <string name="error_location">Não foi possível obter a localização</string>
+
+    <string name="desc_menu">Menu</string>
+    <string name="title_monitors">Monitores:</string>
+    <string name="title_protecteds">Protegidos:</string>
+    <string name="no_monitors">Sem monitores associados</string>
+    <string name="no_protecteds">Sem protegidos associados</string>
+
+    <string name="desc_remove_monitor">Remover Monitor</string>
+    <string name="desc_close">Fechar</string>
+    <string name="label_monitoring_options">Opções de Monitorização</string>
+    <string name="confirm_remove_monitor">Tem a certeza que deseja remover este monitor?</string>
+    <string name="btn_confirm">Confirmar</string>
+
+    <string name="desc_remove_protected">Remover Protegido</string>
+    <string name="label_info">Informação</string>
+    <string name="confirm_remove_protected">Tem a certeza que deseja remover este protegido?</string>
+
+    <string name="title_profile">Perfil</string>
+    <string name="label_change_password">Alterar Palavra-passe</string>
+    <string name="btn_save">Guardar</string>
+    <string name="btn_edit">Editar</string>
+    <string name="btn_logout">Sair</string>
+    <string name="error_load_data">Erro ao carregar dados: %1$s</string>
+    <string name="error_user_not_logged">Utilizador não autenticado</string>
+    <string name="info_recovery_sent">Email de recuperação enviado. Por favor, verifique a sua caixa de entrada.</string>
+
+    <string name="title_monitor_rules">Regras de Monitorização</string>
+    <string name="label_monitor_name">Nome do Monitor</string>
+    <string name="label_phone_number">Número de Telemóvel</string>
+    <string name="label_start_hour">Hora de início</string>
+    <string name="label_end_time">Hora de fim</string>
+    <string name="label_parameters">Parâmetros</string>
+    <string name="no_parameters">Sem parâmetros</string>
+    <string name="btn_finish_edit">Concluir Edição</string>
+    <string name="day_1">Domingo</string>
+    <string name="day_2">Segunda-feira</string>
+    <string name="day_3">Terça-feira</string>
+    <string name="day_4">Quarta-feira</string>
+    <string name="day_5">Quinta-feira</string>
+    <string name="day_6">Sexta-feira</string>
+    <string name="day_7">Sábado</string>
+
+    <string name="label_gps_coordinates">Coordenadas GPS</string>
+    <string name="label_radius">Raio</string>
+    <string name="label_max_speed">Velocidade Máx (km/h)</string>
+    <string name="label_duration_minutes">Duração (minutos)</string>
+    <string name="label_start">Início</string>
+    <string name="label_end">Fim</string>
+    <string name="btn_propose_changes">Propor Alterações</string>
+    <string name="error_fill_parameters">Por favor, preencha todos os parâmetros obrigatórios primeiro</string>
+    <string name="error_parameters_required">Todos os parâmetros devem estar preenchidos para ativar horários</string>
+
+    <string name="title_protected_info">Informação do Protegido</string>
+    <string name="label_name_field">Nome: %s</string>
+    <string name="label_phone_field">Telemóvel: %s</string>
+    <string name="label_total_alerts">Total de alertas</string>
+    <string name="label_no_alerts">Sem alertas</string>
+    <string name="label_last_alert">Último alerta</string>
+    <string name="label_date_field">Data: %s</string>
+    <string name="label_type_field">Tipo: %s</string>
+    <string name="label_location_newest">Localização do alerta mais recente</string>
+    <string name="marker_last_alert">Último Alerta</string>
+    <string name="error_permissions_required">São necessárias permissões para continuar</string>
+    <string name="btn_concede_permissions">Conceder permissões</string>
+
+    <string name="title_warning">AVISO!</string>
+    <string name="msg_monitor_code_instruction">Este é o código que o seu monitor terá de inserir para completar o processo. Não feche esta caixa antes de o código ter sido preenchido pelo monitor.</string>
+
+    <string name="title_insert_code">Insira o código exibido no ecrã do protegido</string>
+    <string name="msg_protected_added">Protegido Adicionado</string>
+    <string name="msg_invalid_code">Código Inválido</string>
+    <string name="msg_error_verifying">Erro ao verificar código</string>
+
+    <string name="title_cancel_alert">Insira o código de alerta para cancelar o alerta</string>
+    <string name="error_invalid_code">Código Inválido</string>
+    <string name="error_no_alerts">Não existem alertas para cancelar no momento</string>
+    <string name="error_time_expired">O monitor já foi notificado</string>
+
+    <string name="title_alert_history">Histórico de Alertas</string>
+    <string name="msg_no_alerts_created">Nenhum alerta criado</string>
+    <string name="alert_fall">Queda</string>
+    <string name="alert_accident">Acidente</string>
+    <string name="alert_geofencing">Violação de Perímetro</string>
+    <string name="alert_inactivity">Inatividade</string>
+    <string name="alert_speed">Velocidade Excedida</string>
+    <string name="alert_panic">Pânico</string>
+    <string name="alert_unknown">Alerta Desconhecido</string>
+
+    <string name="status_canceled">Cancelado</string>
+    <string name="status_sent">Enviado</string>
+    <string name="label_type_prefix">Tipo: %s</string>
+    <string name="label_date_prefix">Data: %s</string>
+
+    <string name="title_proposal_rules">Regras Propostas</string>
+    <string name="nav_monitoring_proposals">Propostas de Monitorização</string>
+    <string name="msg_no_proposals">Não existem propostas de alteração</string>
+    <string name="label_monitor_prefix">Monitor: %s</string>
+    <string name="label_proposed_schedule">Horário Proposto:</string>
+    <string name="btn_accept">Aceitar</string>
+    <string name="btn_reject">Rejeitar</string>
+    <string name="schedule_format">%1$s: %2$s - %3$s</string>
+
+    <string name="notif_alert_detected">SafetYSec - ⚠️ ALERTA DETETADO ⚠️</string>
+    <string name="notif_alert_body">Alerta de %1$s detetado. Insira o código de alerta em 10 segundos.</string>
+    <string name="notif_alert_canceled_title">SafetYSec - Alerta Cancelado</string>
+    <string name="notif_alert_canceled_body">O alerta de %1$s foi cancelado com sucesso.</string>
+    <string name="notif_monitor_title">SafetYSec - ALERTA DE %1$s</string>
+    <string name="notif_monitor_body">O protegido %1$s criou um alerta de %2$s!</string>
+    <string name="channel_emergency_name">Alertas de Emergência</string>
+    <string name="channel_monitor_name">Alertas de Monitorização</string>
+
+    <string name="title_last_alert">Último Alerta</string>
+    <string name="label_protected_name">Protegido: %1$s</string>
+    <string name="label_contact_phone">Contacto: %1$s</string>
+    <string name="total_alerts_received">Total de alertas recebidos deste protegido: %1$d</string>
+    <string name="label_last_alert_sent_to_me">Último Alerta Enviado para Mim</string>
+    <string name="label_alert_type">Tipo: %1$s</string>
+    <string name="label_alert_date">Data: %1$s</string>
+    <string name="label_no_alerts_sent">Este utilizador ainda não lhe enviou alertas.</string>
+    <string name="marker_alert_location">Local do Alerta</string>
+    <string name="not_available">N/A</string>
+    <string name="error_params_required">(Necessita parâmetros)</string>
+</resources>

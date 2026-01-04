@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.profile
 
 import android.Manifest
 import android.os.Build
@@ -41,9 +41,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.AlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.listenForAlerts
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
@@ -51,6 +51,10 @@ import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.res.stringResource
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.checkAllRules
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.CancelAlert
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +66,8 @@ fun ProfileScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    var selectedItem by remember { mutableStateOf("SafetYSec") }
+    val defaultTitle = stringResource(id = R.string.app_name)
+    var selectedItem by remember { mutableStateOf(defaultTitle) }
     var showAddMonitor by remember { mutableStateOf(false) }
     var showAddProtected by remember { mutableStateOf(false) }
     var showCancelAlert by remember { mutableStateOf(false) }
@@ -77,7 +82,8 @@ fun ProfileScreen(
     var codigoAlerta by remember { mutableStateOf("") }
     var telemovel by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessageId by remember { mutableStateOf<Int?>(null) }
+    var externalError by remember { mutableStateOf<String?>(null) }
     var isEditing by remember { mutableStateOf(false) }
 
     val permissions = buildList {
@@ -115,11 +121,11 @@ fun ProfileScreen(
                     isLoading = false
                 }
                 .addOnFailureListener { e ->
-                    errorMessage = "Error loading data: ${e.localizedMessage}"
+                    externalError = e.localizedMessage
                     isLoading = false
                 }
         } else {
-            errorMessage = "User not logged"
+            errorMessageId = R.string.error_user_not_logged
             isLoading = false
         }
     }
@@ -144,12 +150,12 @@ fun ProfileScreen(
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Profile") },
+                    title = { Text(stringResource(id = R.string.title_profile)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
+                                contentDescription = stringResource(id = R.string.desc_menu)
                             )
                         }
                     }
@@ -158,7 +164,7 @@ fun ProfileScreen(
             bottomBar = {
                 BottomNavBar(
                     navController = navController,
-                    selectedRoute = Routes.DASHBOARD,
+                    selectedRoute = Routes.PROFILE,
                     hasRequiredPermissions = hasRequiredPermissions,
                     requestPermissions = { permissionLauncher.launch(permissions.toTypedArray()) }
                 )
@@ -183,7 +189,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = email,
                                 onValueChange = {},
-                                label = { Text("Email") },
+                                label = { Text(stringResource(id = R.string.label_email)) },
                                 enabled = false,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -191,23 +197,24 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = "Change Password",
+                                text = stringResource(id = R.string.label_change_password),
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .clickable {
                                         isLoading = true
-                                        errorMessage = null
+                                        errorMessageId = null
+                                        externalError = null
                                         auth.sendPasswordResetEmail(email)
                                             .addOnCompleteListener { task ->
                                                 isLoading = false
-                                                errorMessage = if (task.isSuccessful) {
-                                                    "Recovery email sent. Please check your inbox."
+                                                if (task.isSuccessful) {
+                                                    errorMessageId = R.string.info_recovery_sent
                                                 } else {
                                                     val exception = task.exception as? FirebaseAuthException
                                                     when (exception?.errorCode) {
-                                                        "ERROR_INVALID_EMAIL" -> "Invalid Email"
-                                                        "ERROR_USER_NOT_FOUND" -> "There is no account associated with this email address."
-                                                        else -> exception?.localizedMessage
+                                                        "ERROR_INVALID_EMAIL" -> errorMessageId = R.string.error_invalid_email
+                                                        "ERROR_USER_NOT_FOUND" -> errorMessageId = R.string.error_user_not_found
+                                                        else -> externalError = exception?.localizedMessage
                                                     }
                                                 }
                                             }
@@ -215,11 +222,17 @@ fun ProfileScreen(
                                     .padding(vertical = 4.dp)
                             )
 
-                            if (errorMessage != null) {
+                            val displayError = when {
+                                errorMessageId != null -> stringResource(id = errorMessageId!!)
+                                externalError != null -> externalError
+                                else -> null
+                            }
+
+                            if (displayError != null) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = errorMessage!!,
-                                    color = if (errorMessage!!.contains("sent"))
+                                    text = displayError,
+                                    color = if (errorMessageId == R.string.info_recovery_sent)
                                         MaterialTheme.colorScheme.secondary
                                     else
                                         MaterialTheme.colorScheme.error,
@@ -232,7 +245,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = nome,
                                 onValueChange = { nome = it },
-                                label = { Text("Name") },
+                                label = { Text(stringResource(id = R.string.label_name)) },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -242,7 +255,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = codigoAlerta,
                                 onValueChange = { codigoAlerta = it },
-                                label = { Text("Alert Code") },
+                                label = { Text(stringResource(id = R.string.label_alert_code)) },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -252,7 +265,7 @@ fun ProfileScreen(
                             OutlinedTextField(
                                 value = telemovel,
                                 onValueChange = { telemovel = it },
-                                label = { Text("Phone") },
+                                label = { Text(stringResource(id = R.string.label_phone)) },
                                 enabled = isEditing,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -273,8 +286,7 @@ fun ProfileScreen(
                                                 .update(updatedData as Map<String, Any>)
                                                 .addOnSuccessListener { isEditing = false }
                                                 .addOnFailureListener { e ->
-                                                    errorMessage =
-                                                        "Error saving: ${e.localizedMessage}"
+                                                    externalError = e.localizedMessage
                                                 }
                                         }
                                     } else {
@@ -285,11 +297,17 @@ fun ProfileScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp)
                             ) {
-                                Text(if (isEditing) "Save" else "Edit")
+                                Text(
+                                    text = if (isEditing)
+                                        stringResource(id = R.string.btn_save)
+                                    else
+                                        stringResource(id = R.string.btn_edit)
+                                )
                             }
 
                             Button(
                                 onClick = {
+                                    checkAllRules.stopMonitoring(context)
                                     auth.signOut()
                                     navController.navigate(Routes.LOGIN) {
                                         popUpTo(Routes.DASHBOARD) { inclusive = true }
@@ -299,7 +317,7 @@ fun ProfileScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = 8.dp, vertical = 16.dp)
                             ) {
-                                Text("Logout")
+                                Text(text = stringResource(id = R.string.btn_logout))
                             }
                         }
                     }

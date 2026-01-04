@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.model
+package pt.isec.a2023131593.AMovProjetoKotlin.model.enums
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.GeoPoint

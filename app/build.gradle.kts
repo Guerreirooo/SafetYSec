@@ -70,5 +70,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation("com.google.maps.android:maps-compose:2.13.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.firebaseui:firebase-ui-auth:8.0.2")
 }

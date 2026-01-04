@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.alert
 
 import android.Manifest
 import android.os.Build
@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
@@ -19,15 +20,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import kotlinx.coroutines.launch
-import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
-import pt.isec.a2023131593.AMovProjetoKotlin.model.HistoryItem
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.AlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.HistoryItem
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.listenForAlerts
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +46,9 @@ fun AlertHistory(
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedItem by remember { mutableStateOf("Alert History") }
+
+    val historyTitle = stringResource(id = R.string.title_alert_history)
+    var selectedItem by remember { mutableStateOf(historyTitle) }
 
     var historyItems by remember { mutableStateOf<List<HistoryItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -121,12 +126,12 @@ fun AlertHistory(
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Alert History") },
+                    title = { Text(stringResource(id = R.string.title_alert_history)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
+                                contentDescription = stringResource(id = R.string.desc_menu)
                             )
                         }
                     }
@@ -156,7 +161,7 @@ fun AlertHistory(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No alerts created",
+                                text = stringResource(id = R.string.msg_no_alerts_created),
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
@@ -168,7 +173,8 @@ fun AlertHistory(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(historyItems) { item ->
-                                AlertHistoryCard(item)
+                                val translatedType = translateAlertType(item.type)
+                                AlertHistoryCard(item.copy(type = translatedType))
                             }
                         }
                     }
@@ -180,4 +186,17 @@ fun AlertHistory(
     if (showAddMonitor) AddMonitor(onDismiss = { showAddMonitor = false })
     if (showAddProtected) AddProtected(onDismiss = { showAddProtected = false }, onProtectedAdded = {})
     if (showCancelAlert) CancelAlert(onDismiss = { showCancelAlert = false })
+}
+
+@Composable
+fun translateAlertType(type: String): String {
+    return when (type.uppercase()) {
+        "FALL" -> stringResource(id = R.string.alert_fall)
+        "ACCIDENT" -> stringResource(id = R.string.alert_accident)
+        "GEOFENCING" -> stringResource(id = R.string.alert_geofencing)
+        "INACTIVITY" -> stringResource(id = R.string.alert_inactivity)
+        "SPEED" -> stringResource(id = R.string.alert_speed)
+        "PANIC" -> stringResource(id = R.string.alert_panic)
+        else -> stringResource(id = R.string.alert_unknown)
+    }
 }

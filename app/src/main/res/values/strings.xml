@@ -1,3 +1,159 @@
 <resources>
-    <string name="app_name">AMovProjetoKotlin</string>
+    <string name="app_name">SafetYSec</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="btn_login">Login</string>
+    <string name="btn_create_account">Create account</string>
+    <string name="btn_forget_password">Forget password</string>
+    <string name="error_empty_fields">Email and password must be filled</string>
+    <string name="error_invalid_credentials">Incorrect email or password</string>
+    <string name="error_invalid_email">Invalid email</string>
+    <string name="error_user_disabled">Account disabled</string>
+    <string name="error_reset_email_empty">Enter your email to reset password</string>
+    <string name="error_user_not_found">No account found with this email</string>
+    <string name="info_reset_sent">Reset email sent. Check your inbox.</string>
+
+    <string name="desc_back">Back</string>
+    <string name="label_name">Name</string>
+    <string name="label_alert_code">Alert Code</string>
+    <string name="label_phone">Phone</string>
+    <string name="btn_register">Register</string>
+    <string name="error_all_fields">All fields must be filled.</string>
+    <string name="error_email_in_use">Email Already in use</string>
+    <string name="error_weak_password">Password too weak (min. 6 Characters)</string>
+    <string name="error_saving">Error saving: %1$s</string>
+
+    <string name="menu_associate_monitor">Associate Monitor</string>
+    <string name="menu_add_protected">Add Protected</string>
+    <string name="menu_monitoring_proposals">Monitoring Proposals</string>
+    <string name="menu_alerts_history">Alerts History</string>
+    <string name="menu_cancel_alert">Cancel Alert</string>
+
+    <string name="desc_dashboard">Dashboard</string>
+    <string name="desc_profile">Profile</string>
+    <string name="btn_panic">PANIC !</string>
+    <string name="error_permissions">Location permissions and notifications are required.</string>
+    <string name="error_location">Unable to obtain location</string>
+
+    <string name="desc_menu">Menu</string>
+    <string name="title_monitors">Monitors:</string>
+    <string name="title_protecteds">Protecteds:</string>
+    <string name="no_monitors">No monitors associated</string>
+    <string name="no_protecteds">No protecteds associated</string>
+
+    <string name="desc_remove_monitor">Remove Monitor</string>
+    <string name="desc_close">Close</string>
+    <string name="label_monitoring_options">Monitoring Options</string>
+    <string name="confirm_remove_monitor">Are you sure you want to remove this monitor?</string>
+    <string name="btn_confirm">Confirm</string>
+
+    <string name="desc_remove_protected">Remove Protected</string>
+    <string name="label_info">Info</string>
+    <string name="confirm_remove_protected">Are you sure you want to remove this protected?</string>
+
+    <string name="title_profile">Profile</string>
+    <string name="label_change_password">Change Password</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_logout">Logout</string>
+    <string name="error_load_data">Error loading data: %1$s</string>
+    <string name="error_user_not_logged">User not logged</string>
+    <string name="info_recovery_sent">Recovery email sent. Please check your inbox.</string>
+
+    <string name="title_monitor_rules">Monitorization Rules</string>
+    <string name="label_monitor_name">Monitor Name</string>
+    <string name="label_phone_number">Phone Number</string>
+    <string name="label_start_hour">Start hour</string>
+    <string name="label_end_time">End time</string>
+    <string name="label_parameters">Parameters</string>
+    <string name="no_parameters">No parameters</string>
+    <string name="btn_finish_edit">Finish Edit</string>
+    <string name="day_1">Sunday</string>
+    <string name="day_2">Monday</string>
+    <string name="day_3">Tuesday</string>
+    <string name="day_4">Wednesday</string>
+    <string name="day_5">Thursday</string>
+    <string name="day_6">Friday</string>
+    <string name="day_7">Saturday</string>
+
+    <string name="label_gps_coordinates">GPS Coordinates</string>
+    <string name="label_radius">Radius</string>
+    <string name="label_max_speed">Max Speed (km/h)</string>
+    <string name="label_duration_minutes">Duration (minutes)</string>
+    <string name="label_start">Start</string>
+    <string name="label_end">End</string>
+    <string name="btn_propose_changes">Propose Changes</string>
+    <string name="error_fill_parameters">Please fill all required parameters first</string>
+    <string name="error_parameters_required">All parameters must be filled to enable schedules</string>
+
+    <string name="title_protected_info">Protected Info</string>
+    <string name="label_name_field">Name: %s</string>
+    <string name="label_phone_field">Phone: %s</string>
+    <string name="label_total_alerts">Total alerts</string>
+    <string name="label_no_alerts">No alerts</string>
+    <string name="label_last_alert">Last alert</string>
+    <string name="label_date_field">Date: %s</string>
+    <string name="label_type_field">Type: %s</string>
+    <string name="label_location_newest">Location of the newest alert</string>
+    <string name="marker_last_alert">Last Alert</string>
+    <string name="error_permissions_required">Permissions are required to continue</string>
+    <string name="btn_concede_permissions">Concede permissions</string>
+
+    <string name="title_warning">WARNING!</string>
+    <string name="msg_monitor_code_instruction">This is the code that your monitor will need to insert to complete the process. Do not close this box before the code has been filled in by the monitor.</string>
+
+    <string name="title_insert_code">Insert the code displayed on the protected screen</string>
+    <string name="msg_protected_added">Protected Added</string>
+    <string name="msg_invalid_code">Invalid Code</string>
+    <string name="msg_error_verifying">Error verifying code</string>
+
+    <string name="title_cancel_alert">Insert the alert code to cancel the alert</string>
+    <string name="error_invalid_code">Invalid Code</string>
+    <string name="error_no_alerts">No alerts to cancel at the moment</string>
+    <string name="error_time_expired">Monitor already notified</string>
+
+    <string name="title_alert_history">Alert History</string>
+    <string name="msg_no_alerts_created">No alerts created</string>
+    <string name="alert_fall">Fall</string>
+    <string name="alert_accident">Accident</string>
+    <string name="alert_geofencing">Geofencing Breach</string>
+    <string name="alert_inactivity">Inactivity</string>
+    <string name="alert_speed">Speed Limit Exceeded</string>
+    <string name="alert_panic">Panic Button Pressed</string>
+    <string name="alert_unknown">Unknown Alert</string>
+
+    <string name="status_canceled">Canceled</string>
+    <string name="status_sent">Sent</string>
+    <string name="label_type_prefix">Type: %s</string>
+    <string name="label_date_prefix">Date: %s</string>
+
+    <string name="title_proposal_rules">Proposed Rules</string>
+    <string name="nav_monitoring_proposals">Monitoring Proposals</string>
+    <string name="msg_no_proposals">No proposed changes</string>
+    <string name="label_monitor_prefix">Monitor: %s</string>
+    <string name="label_proposed_schedule">Proposed Schedule:</string>
+    <string name="btn_accept">Accept</string>
+    <string name="btn_reject">Reject</string>
+    <string name="schedule_format">%1$s: %2$s - %3$s</string>
+
+    <string name="notif_alert_detected">SafetYSec - ⚠️ ALERT DETECTED ⚠️</string>
+    <string name="notif_alert_body">Alert %1$s detected. Insert the alert code within 10 seconds.</string>
+    <string name="notif_alert_canceled_title">SafetYSec - Canceled Alert</string>
+    <string name="notif_alert_canceled_body">Alert %1$s has been successfully cancelled.</string>
+    <string name="notif_monitor_title">SafetYSec - %1$s ALERT</string>
+    <string name="notif_monitor_body">Protected %1$s created an alert %2$s!</string>
+    <string name="channel_emergency_name">Emergency Alerts</string>
+    <string name="channel_monitor_name">Monitor Alerts</string>
+
+    <string name="title_last_alert">Last Alert</string>
+    <string name="label_protected_name">Name: %1$s</string>
+    <string name="label_contact_phone">Phone: %1$s</string>
+    <string name="total_alerts_received">Total alerts received from this protected: %1$d</string>
+    <string name="label_last_alert_sent_to_me">Last Alert Sent to Me</string>
+    <string name="label_alert_type">Type: %1$s</string>
+    <string name="label_alert_date">Date: %1$s</string>
+    <string name="label_no_alerts_sent">This user has not sent you any alerts yet.</string>
+    <string name="marker_alert_location">Alert Location</string>
+    <string name="not_available">N/A</string>
+    <string name="error_params_required">(Parameters required)</string>
 </resources>

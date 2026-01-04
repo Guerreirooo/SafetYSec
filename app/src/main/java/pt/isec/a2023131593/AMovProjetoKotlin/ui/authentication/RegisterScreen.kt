@@ -9,11 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,12 +29,14 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var nome by remember { mutableStateOf("") }
     var codigoAlerta by remember { mutableStateOf("") }
-    var telemovel by remember { mutableStateOf("") } // NOVO CAMPO
+    var telemovel by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessageId by remember { mutableStateOf<Int?>(null) }
+    var externalError by remember { mutableStateOf<String?>(null) }
 
     val firestore = FirebaseFirestore.getInstance()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -41,7 +46,7 @@ fun RegisterScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(id = R.string.desc_back)
                         )
                     }
                 }
@@ -55,12 +60,13 @@ fun RegisterScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(0.9f)
-                .verticalScroll(scrollState),
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "SafetYSec",
+                    text = stringResource(id = R.string.app_name),
                     style = MaterialTheme.typography.headlineSmall
                 )
 
@@ -69,7 +75,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text(stringResource(id = R.string.label_email)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -78,7 +84,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(id = R.string.label_password)) },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation()
                 )
@@ -88,7 +94,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = nome,
                     onValueChange = { nome = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(id = R.string.label_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -97,7 +103,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = codigoAlerta,
                     onValueChange = { codigoAlerta = it },
-                    label = { Text("Alert Code") },
+                    label = { Text(stringResource(id = R.string.label_alert_code)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -106,15 +112,15 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = telemovel,
                     onValueChange = { telemovel = it },
-                    label = { Text("Phone") },
+                    label = { Text(stringResource(id = R.string.label_phone)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (errorMessage != null) {
+                if (errorMessageId != null) {
                     Text(
-                        text = errorMessage!!,
+                        text = externalError!!,
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -123,15 +129,17 @@ fun RegisterScreen(
                 Button(
                     onClick = {
                         if (nome.isBlank() || codigoAlerta.isBlank() || telemovel.isBlank() || email.isBlank() || password.isBlank()) {
-                            errorMessage = "All fields must be filled."
+                            errorMessageId = R.string.error_all_fields
                             return@Button
                         }
 
                         isLoading = true
-                        errorMessage = null
+                        errorMessageId = null
+                        externalError = null
 
                         auth.createUserWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
+                                isLoading = false
                                 if (task.isSuccessful) {
                                     val userId = auth.currentUser?.uid ?: ""
                                     val userMap = hashMapOf(
@@ -143,22 +151,17 @@ fun RegisterScreen(
                                     firestore.collection("User")
                                         .document(userId)
                                         .set(userMap)
-                                        .addOnSuccessListener {
-                                            isLoading = false
-                                            onRegisterSuccess()
-                                        }
+                                        .addOnSuccessListener { onRegisterSuccess() }
                                         .addOnFailureListener { e ->
-                                            isLoading = false
-                                            errorMessage = "Error saving: ${e.localizedMessage}"
+                                            externalError = e.localizedMessage
                                         }
                                 } else {
-                                    isLoading = false
                                     val exception = task.exception as? FirebaseAuthException
-                                    errorMessage = when (exception?.errorCode) {
-                                        "ERROR_EMAIL_ALREADY_IN_USE" -> "Email Already in use"
-                                        "ERROR_INVALID_EMAIL" -> "Invalid Email"
-                                        "ERROR_WEAK_PASSWORD" -> "Password too weak (mín. 6 Characters)"
-                                        else -> exception?.localizedMessage
+                                    when (exception?.errorCode) {
+                                        "ERROR_EMAIL_ALREADY_IN_USE" -> errorMessageId = R.string.error_email_in_use
+                                        "ERROR_INVALID_EMAIL" -> errorMessageId = R.string.error_invalid_email
+                                        "ERROR_WEAK_PASSWORD" -> errorMessageId = R.string.error_weak_password
+                                        else -> externalError = exception?.localizedMessage
                                     }
                                 }
                             }
@@ -172,7 +175,7 @@ fun RegisterScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Register")
+                        Text(stringResource(id = R.string.btn_register))
                     }
                 }
             }

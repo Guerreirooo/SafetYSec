@@ -1,5 +1,7 @@
 package pt.isec.a2023131593.AMovProjetoKotlin.ui.authentication
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -9,9 +11,13 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.google.firebase.auth.FirebaseAuthException
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-
+import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 @Composable
 fun LoginScreen(
     auth: FirebaseAuth,
@@ -21,7 +27,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<Int?>(null) }
 
     Box(
         modifier = Modifier
@@ -35,7 +41,7 @@ fun LoginScreen(
         ) {
 
             Text(
-                text = "SafetYSec",
+                text = stringResource(id = R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall
             )
 
@@ -44,7 +50,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(id = R.string.label_email)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -53,7 +59,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
+                label = { Text(stringResource(id = R.string.label_password)) },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation()
             )
@@ -62,7 +68,7 @@ fun LoginScreen(
 
             if (errorMessage != null) {
                 Text(
-                    text = errorMessage!!,
+                    text = stringResource(id = errorMessage!!),
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -71,7 +77,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (email.isBlank() || password.isBlank()) {
-                        errorMessage = "Email e password têm de ser preenchidos"
+                        errorMessage = R.string.error_empty_fields
                         return@Button
                     }
 
@@ -85,17 +91,16 @@ fun LoginScreen(
                                 onLoginSuccess()
                             } else {
                                 val exception = task.exception as? FirebaseAuthException
-
                                 errorMessage = when (exception?.errorCode) {
                                     "ERROR_WRONG_PASSWORD",
                                     "ERROR_USER_NOT_FOUND",
                                     "ERROR_INVALID_CREDENTIAL",
                                     "INVALID_LOGIN_CREDENTIALS" ->
-                                        "Email ou password incorretos"
+                                        R.string.error_invalid_credentials
 
-                                    "ERROR_INVALID_EMAIL" -> "Email inválido"
-                                    "ERROR_USER_DISABLED" -> "Conta desativada"
-                                    else -> "Email ou password incorretos"
+                                    "ERROR_INVALID_EMAIL" -> R.string.error_invalid_email
+                                    "ERROR_USER_DISABLED" -> R.string.error_user_disabled
+                                    else -> R.string.error_invalid_credentials
                                 }
                             }
                         }
@@ -109,7 +114,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Login")
+                    Text(stringResource(id = R.string.btn_login))
                 }
             }
 
@@ -120,13 +125,13 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 TextButton(onClick = onRegister) {
-                    Text("Create account")
+                    Text(stringResource(id = R.string.btn_create_account))
                 }
 
                 TextButton(
                     onClick = {
                         if (email.isBlank()) {
-                            errorMessage = "Introduz o email para recuperar a password"
+                            errorMessage = R.string.error_reset_email_empty
                         } else {
                             isLoading = true
                             errorMessage = null
@@ -134,25 +139,21 @@ fun LoginScreen(
                             auth.sendPasswordResetEmail(email)
                                 .addOnCompleteListener { task ->
                                     isLoading = false
-
                                     if (task.isSuccessful) {
-                                        errorMessage =
-                                            "Email de recuperação enviado. Verifica a tua caixa de entrada."
+                                        errorMessage = R.string.info_reset_sent
                                     } else {
-                                        val exception =
-                                            task.exception as? FirebaseAuthException
-
+                                        val exception = task.exception as? FirebaseAuthException
                                         errorMessage = when (exception?.errorCode) {
-                                            "ERROR_INVALID_EMAIL" -> "Email inválido"
-                                            "ERROR_USER_NOT_FOUND" -> "Não existe conta associada a este email"
-                                            else -> exception?.localizedMessage
+                                            "ERROR_INVALID_EMAIL" -> R.string.error_invalid_email
+                                            "ERROR_USER_NOT_FOUND" -> R.string.error_user_not_found
+                                            else -> R.string.error_invalid_credentials
                                         }
                                     }
                                 }
                         }
                     }
                 ) {
-                    Text("Forget password")
+                    Text(stringResource(id = R.string.btn_forget_password))
                 }
             }
         }

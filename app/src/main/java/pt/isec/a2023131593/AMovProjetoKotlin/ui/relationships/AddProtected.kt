@@ -46,7 +46,8 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
-
+import androidx.compose.ui.res.stringResource
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 @Composable
 fun AddProtected(
     onDismiss: () -> Unit,
@@ -64,6 +65,10 @@ fun AddProtected(
 
     val focusRequesters = List(codeLength) { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val stringSuccess = stringResource(id = R.string.msg_protected_added)
+    val stringInvalid = stringResource(id = R.string.msg_invalid_code)
+    val stringError = stringResource(id = R.string.msg_error_verifying)
 
     LaunchedEffect(code.joinToString("")) {
         val joinedCode = code.joinToString("")
@@ -108,19 +113,19 @@ fun AddProtected(
                                     firestore.collection("OneTimePass").document(it).delete()
                                 }
 
-                                resultText = "Protected Added"
+                                resultText = stringSuccess
                                 isSuccess = true
                                 onProtectedAdded()
                                 keyboardController?.hide()
                             }
                         }
                     } else {
-                        resultText = "Invalid Code"
+                        resultText = stringInvalid
                         isSuccess = false
                     }
                 }
                 .addOnFailureListener {
-                    resultText = "Error verifying code"
+                    resultText = stringError
                     isSuccess = false
                 }
         } else if (joinedCode.length < codeLength) {
@@ -147,7 +152,10 @@ fun AddProtected(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.TopEnd)
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Fechar")
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(id = R.string.desc_close)
+                    )
                 }
 
                 Column(
@@ -158,7 +166,7 @@ fun AddProtected(
                 ) {
 
                     Text(
-                        text = "Insert the code displayed on the protected screen",
+                        text = stringResource(id = R.string.title_insert_code),
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center
                     )

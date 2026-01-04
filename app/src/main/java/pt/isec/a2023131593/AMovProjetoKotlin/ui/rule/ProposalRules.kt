@@ -1,4 +1,4 @@
-package pt.isec.a2023131593.AMovProjetoKotlin.ui.other
+package pt.isec.a2023131593.AMovProjetoKotlin.ui.rule
 
 import android.Manifest
 import android.os.Build
@@ -10,22 +10,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import pt.isec.a2023131593.AMovProjetoKotlin.model.AlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.AlertType
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.BottomNavBar
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.navigation.LeftNavBar
-import pt.isec.a2023131593.AMovProjetoKotlin.model.Routes
-import pt.isec.a2023131593.AMovProjetoKotlin.model.listenForAlerts
+import pt.isec.a2023131593.AMovProjetoKotlin.model.enums.Routes
+import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.listenForAlerts
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
+import pt.isec.a2023131593.AMovProjetoKotlin.R
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.CancelAlert
+import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.translateAlertType
+import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,14 +48,14 @@ fun ProposalRules(
     var showCancelAlert by remember { mutableStateOf(false) }
 
     val daysOfWeek = listOf(
-        1 to "Sunday",
-        2 to "Monday",
-        3 to "Tuesday",
-        4 to "Wednesday",
-        5 to "Thursday",
-        6 to "Friday",
-        7 to "Saturday"
-    )
+        1 to stringResource(id = R.string.day_1),
+        2 to stringResource(id = R.string.day_2),
+        3 to stringResource(id = R.string.day_3),
+        4 to stringResource(id = R.string.day_4),
+        5 to stringResource(id = R.string.day_5),
+        6 to stringResource(id = R.string.day_6),
+        7 to stringResource(id = R.string.day_7)
+    ).toMap()
 
     var proposals by remember {
         mutableStateOf<Map<String, Map<String, Map<String, Any>>>>(emptyMap())
@@ -60,10 +66,12 @@ fun ProposalRules(
     }
 
     val context = LocalContext.current
-    val permissions = buildList {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.POST_NOTIFICATIONS)
+    val permissions = remember {
+        buildList {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 
@@ -117,7 +125,6 @@ fun ProposalRules(
                             }
                     }
                 }
-
                 proposals = result
             }
     }
@@ -129,22 +136,21 @@ fun ProposalRules(
                 navController = navController,
                 drawerState = drawerState,
                 scope = scope,
-                selectedItem = "Monitoring Proposals",
+                selectedItem = stringResource(id = R.string.nav_monitoring_proposals),
                 onItemSelected = {},
                 onAddMonitorClick = { showAddMonitor = true },
                 onAddProtectedClick = { showAddProtected = true },
-                onCancelAlertClick = {showCancelAlert = true}
-
+                onCancelAlertClick = { showCancelAlert = true }
             )
         }
     ) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Proposed Rules") },
+                    title = { Text(stringResource(id = R.string.title_proposal_rules)) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(id = R.string.desc_menu))
                         }
                     }
                 )
@@ -167,7 +173,7 @@ fun ProposalRules(
                     .verticalScroll(rememberScrollState())
             ) {
                 if (proposals.isEmpty()) {
-                    Text("No proposed changes")
+                    Text(stringResource(id = R.string.msg_no_proposals))
                     return@Column
                 }
 
@@ -182,13 +188,14 @@ fun ProposalRules(
                     ) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                text = "Monitor: $monitorName",
+                                text = stringResource(id = R.string.label_monitor_prefix, monitorName),
                                 style = MaterialTheme.typography.titleMedium
                             )
 
                             Spacer(Modifier.height(8.dp))
 
                             rules.forEach { (ruleName, ruleData) ->
+                                val translatedRuleName = translateAlertType(ruleName)
 
                                 val paramToggles = remember(monitorUid + ruleName) {
                                     mutableStateMapOf<String, Boolean>().apply {
@@ -217,17 +224,15 @@ fun ProposalRules(
                                         .background(Color(0xFFEFEFEF))
                                         .padding(8.dp)
                                 ) {
-                                    Text(ruleName, style = MaterialTheme.typography.titleSmall)
+                                    Text(translatedRuleName, style = MaterialTheme.typography.titleSmall)
 
                                     if (paramToggles.isNotEmpty()) {
                                         Spacer(Modifier.height(4.dp))
-                                        Text("Parameters:")
+                                        Text(stringResource(id = R.string.label_parameters))
                                         paramToggles.forEach { (param, checked) ->
                                             Row(
-                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .background(Color.Transparent)
-                                                    .padding(4.dp)
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(4.dp)
                                             ) {
                                                 Checkbox(
                                                     checked = checked,
@@ -241,14 +246,12 @@ fun ProposalRules(
 
                                     if (scheduleToggles.isNotEmpty()) {
                                         Spacer(Modifier.height(4.dp))
-                                        Text("Proposed Schedule:")
+                                        Text(stringResource(id = R.string.label_proposed_schedule))
                                         scheduleToggles.forEach { (dayNumber, triple) ->
-                                            var (checked, start, end) = triple
+                                            val (checked, start, end) = triple
                                             Row(
-                                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .background(Color.Transparent)
-                                                    .padding(4.dp)
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(4.dp)
                                             ) {
                                                 Checkbox(
                                                     checked = checked,
@@ -258,7 +261,7 @@ fun ProposalRules(
                                                 )
                                                 Spacer(Modifier.width(8.dp))
                                                 val dayName = daysOfWeek[dayNumber] ?: "Unknown"
-                                                Text("$dayName: $start - $end")
+                                                Text(stringResource(id = R.string.schedule_format, dayName, start, end))
                                             }
                                         }
                                     }
@@ -266,14 +269,9 @@ fun ProposalRules(
                                     Spacer(Modifier.height(8.dp))
 
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 8.dp),
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        val buttonModifier = Modifier
-                                            .weight(1f)
-
                                         Button(
                                             onClick = {
                                                 val selectedParams = paramToggles.filter { it.value }.keys.toList()
@@ -289,6 +287,7 @@ fun ProposalRules(
                                                         val existing = data[monitorUid] as? MutableMap<String, Any> ?: mutableMapOf()
 
                                                         val ruleMap = mutableMapOf<String, Any>()
+
                                                         if (selectedParams.isNotEmpty() || selectedSchedule.isNotEmpty()) {
                                                             ruleMap["allowed"] = true
                                                             ruleMap["parameters"] = selectedParams
@@ -301,7 +300,10 @@ fun ProposalRules(
 
                                                         existing[ruleName] = ruleMap
                                                         data[monitorUid] = existing
-                                                        firestore.collection("Rule").document(currentUserId).set(data)
+
+                                                        firestore.collection("Rule")
+                                                            .document(currentUserId)
+                                                            .set(data)
                                                             .addOnSuccessListener {
                                                                 navController.navigate(Routes.PROPOSAL_RULES) {
                                                                     popUpTo(Routes.PROPOSAL_RULES) { inclusive = true }
@@ -309,10 +311,10 @@ fun ProposalRules(
                                                             }
                                                     }
                                             },
-                                            modifier = buttonModifier,
+                                            modifier = Modifier.weight(1f),
                                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784))
                                         ) {
-                                            Text("Accept")
+                                            Text(stringResource(id = R.string.btn_accept))
                                         }
 
                                         Button(
@@ -322,15 +324,20 @@ fun ProposalRules(
                                                     "parameters" to emptyList<Any>(),
                                                     "scheduleDays" to emptyList<Any>()
                                                 )
+
                                                 firestore.collection("Rule")
                                                     .document(currentUserId)
                                                     .get()
                                                     .addOnSuccessListener { doc ->
                                                         val data = doc.data?.toMutableMap() ?: mutableMapOf()
                                                         val existing = data[monitorUid] as? MutableMap<String, Any> ?: mutableMapOf()
+
                                                         existing[ruleName] = ruleMap
                                                         data[monitorUid] = existing
-                                                        firestore.collection("Rule").document(currentUserId).set(data)
+
+                                                        firestore.collection("Rule")
+                                                            .document(currentUserId)
+                                                            .set(data)
                                                             .addOnSuccessListener {
                                                                 navController.navigate(Routes.PROPOSAL_RULES) {
                                                                     popUpTo(Routes.PROPOSAL_RULES) { inclusive = true }
@@ -338,10 +345,10 @@ fun ProposalRules(
                                                             }
                                                     }
                                             },
-                                            modifier = buttonModifier,
+                                            modifier = Modifier.weight(1f),
                                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6B6B))
                                         ) {
-                                            Text("Reject", color = Color.White)
+                                            Text(stringResource(id = R.string.btn_reject), color = Color.White)
                                         }
                                     }
                                 }
@@ -353,20 +360,7 @@ fun ProposalRules(
             }
         }
     }
-    if (showAddMonitor) {
-        AddMonitor(
-            onDismiss = { showAddMonitor = false }
-        )
-    }
-
-    if (showAddProtected) {
-        AddProtected(
-            onDismiss = { showAddProtected = false },
-            onProtectedAdded = {}
-        )
-    }
-
-    if(showCancelAlert){
-        CancelAlert(onDismiss = { showCancelAlert = false })
-    }
+    if (showAddMonitor) AddMonitor(onDismiss = { showAddMonitor = false })
+    if (showAddProtected) AddProtected(onDismiss = { showAddProtected = false }, onProtectedAdded = {})
+    if (showCancelAlert) CancelAlert(onDismiss = { showCancelAlert = false })
 }

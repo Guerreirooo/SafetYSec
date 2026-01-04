@@ -156,4 +156,9 @@
     <string name="marker_alert_location">Local do Alerta</string>
     <string name="not_available">N/A</string>
     <string name="error_params_required">(Necessita parâmetros)</string>
+
+    <string name="label_speed_param">Velocidade máxima (km/h): </string>
+    <string name="label_inactivity_param">Minutos Inativo: </string>
+    <string name="label_geofencing_coords">Coordenadas GPS: </string>
+    <string name="label_geofencing_radius">Raio (metros): </string>
 </resources>

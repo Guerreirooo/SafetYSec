@@ -156,4 +156,9 @@
     <string name="marker_alert_location">Alert Location</string>
     <string name="not_available">N/A</string>
     <string name="error_params_required">(Parameters required)</string>
+
+    <string name="label_speed_param">Maximum speed (km/h): </string>
+    <string name="label_inactivity_param">Inactivity minutes: </string>
+    <string name="label_geofencing_coords">GPS Coordinates: </string>
+    <string name="label_geofencing_radius">Radius (meters): </string>
 </resources>

@@ -28,9 +28,9 @@ import pt.isec.a2023131593.AMovProjetoKotlin.model.alerts.listenForAlerts
 import pt.isec.a2023131593.AMovProjetoKotlin.model.rememberPermissionsState
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddMonitor
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.relationships.AddProtected
-import pt.isec.a2023131593.AMovProjetoKotlin.R
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.CancelAlert
 import pt.isec.a2023131593.AMovProjetoKotlin.ui.alert.translateAlertType
+import pt.isec.a2023131593.AMovProjetoKotlin.R
 import kotlin.collections.get
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -228,8 +228,22 @@ fun ProposalRules(
 
                                     if (paramToggles.isNotEmpty()) {
                                         Spacer(Modifier.height(4.dp))
-                                        Text(stringResource(id = R.string.label_parameters))
-                                        paramToggles.forEach { (param, checked) ->
+                                        Text(stringResource(id = R.string.label_parameters),
+                                                style = MaterialTheme.typography.labelLarge)
+
+                                        val parameterList = paramToggles.keys.toList()
+                                        parameterList.forEachIndexed { index, param ->
+                                            val checked = paramToggles[param] ?: false
+
+                                            val parameterLabel = when (ruleName.uppercase()) {
+                                                "SPEED" -> stringResource(id = R.string.label_speed_param)
+                                                "INACTIVITY" -> stringResource(id = R.string.label_inactivity_param)
+                                                "GEOFENCING" -> {
+                                                    if (index == 0) stringResource(id = R.string.label_geofencing_coords)
+                                                    else stringResource(id = R.string.label_geofencing_radius)
+                                                }
+                                                else -> ""
+                                            }
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier.padding(4.dp)
@@ -239,7 +253,7 @@ fun ProposalRules(
                                                     onCheckedChange = { paramToggles[param] = it }
                                                 )
                                                 Spacer(Modifier.width(8.dp))
-                                                Text(param)
+                                                Text(text = "$parameterLabel$param")
                                             }
                                         }
                                     }

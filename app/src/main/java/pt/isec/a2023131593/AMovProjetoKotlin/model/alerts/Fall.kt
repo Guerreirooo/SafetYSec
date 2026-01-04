@@ -33,7 +33,7 @@ object FallRule {
 
                 val gForce = sqrt(x * x + y * y + z * z) / SensorManager.GRAVITY_EARTH
 
-                if (gForce < 0.5f && System.currentTimeMillis() - lastFallDetected > 1000) {
+                if (gForce < 0.7f && System.currentTimeMillis() - lastFallDetected > 1000) {
                     lastFallDetected = System.currentTimeMillis()
                     onFallDetected()
                 }
